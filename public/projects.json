@@ -1,0 +1,93 @@
+[
+  {
+    "id": "prj-northstar",
+    "customer": "Northstar Health",
+    "name": "Clinical workflow rollout",
+    "owner": "Maya Chen",
+    "status": "On track",
+    "priority": "High",
+    "progress": 72,
+    "dueDate": "2026-08-21",
+    "openRisks": 1,
+    "monthlyValue": 18400,
+    "updatedAt": "2026-07-26T14:20:00.000Z"
+  },
+  {
+    "id": "prj-veridian",
+    "customer": "Veridian Bank",
+    "name": "Enterprise data migration",
+    "owner": "Theo Grant",
+    "status": "At risk",
+    "priority": "Critical",
+    "progress": 48,
+    "dueDate": "2026-08-06",
+    "openRisks": 4,
+    "monthlyValue": 32750,
+    "updatedAt": "2026-07-27T09:15:00.000Z"
+  },
+  {
+    "id": "prj-apex",
+    "customer": "Apex Mobility",
+    "name": "Fleet operations integration",
+    "owner": "Inez Patel",
+    "status": "Blocked",
+    "priority": "High",
+    "progress": 36,
+    "dueDate": "2026-08-12",
+    "openRisks": 3,
+    "monthlyValue": 22100,
+    "updatedAt": "2026-07-25T16:45:00.000Z"
+  },
+  {
+    "id": "prj-fieldwork",
+    "customer": "Fieldwork Energy",
+    "name": "Asset monitoring launch",
+    "owner": "Rowan Bell",
+    "status": "On track",
+    "priority": "Medium",
+    "progress": 84,
+    "dueDate": "2026-09-03",
+    "openRisks": 0,
+    "monthlyValue": 14600,
+    "updatedAt": "2026-07-27T07:30:00.000Z"
+  },
+  {
+    "id": "prj-harbour",
+    "customer": "Harbour & Co.",
+    "name": "Multi-region enablement",
+    "owner": "Sam Okafor",
+    "status": "On track",
+    "priority": "Medium",
+    "progress": 61,
+    "dueDate": "2026-09-18",
+    "openRisks": 1,
+    "monthlyValue": 19800,
+    "updatedAt": "2026-07-24T12:10:00.000Z"
+  },
+  {
+    "id": "prj-civic",
+    "customer": "CivicWorks",
+    "name": "Resident portal adoption",
+    "owner": "Maya Chen",
+    "status": "Complete",
+    "priority": "Low",
+    "progress": 100,
+    "dueDate": "2026-07-18",
+    "openRisks": 0,
+    "monthlyValue": 9800,
+    "updatedAt": "2026-07-18T17:00:00.000Z"
+  },
+  {
+    "id": "prj-lumon",
+    "customer": "Lumon Retail",
+    "name": "Store analytics activation",
+    "owner": "Theo Grant",
+    "status": "At risk",
+    "priority": "High",
+    "progress": 57,
+    "dueDate": "2026-08-28",
+    "openRisks": 2,
+    "monthlyValue": 27400,
+    "updatedAt": "2026-07-26T11:50:00.000Z"
+  }
+]
