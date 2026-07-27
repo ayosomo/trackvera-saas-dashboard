@@ -1,0 +1,43 @@
+import type { Project } from "../types";
+
+export const sampleProjects: Project[] = [
+  {
+    id: "project-1",
+    customer: "Northstar Health",
+    name: "Clinical workflow rollout",
+    owner: "Maya Chen",
+    status: "On track",
+    priority: "High",
+    progress: 72,
+    dueDate: "2026-08-21",
+    openRisks: 1,
+    monthlyValue: 18400,
+    updatedAt: "2026-07-26T14:20:00.000Z",
+  },
+  {
+    id: "project-2",
+    customer: "Veridian Bank",
+    name: "Enterprise data migration",
+    owner: "Theo Grant",
+    status: "At risk",
+    priority: "Critical",
+    progress: 48,
+    dueDate: "2026-08-06",
+    openRisks: 4,
+    monthlyValue: 32750,
+    updatedAt: "2026-07-27T09:15:00.000Z",
+  },
+  {
+    id: "project-3",
+    customer: "CivicWorks",
+    name: "Resident portal adoption",
+    owner: "Maya Chen",
+    status: "Complete",
+    priority: "Low",
+    progress: 100,
+    dueDate: "2026-07-18",
+    openRisks: 0,
+    monthlyValue: 9800,
+    updatedAt: "2026-07-18T17:00:00.000Z",
+  },
+];
