@@ -1,42 +1,134 @@
 # FlowOps
 
-FlowOps is an implementation delivery dashboard for Product, Delivery, and
-Engineering teams. It brings customer projects, delivery health, deadlines,
-owners, risks, progress, and recurring customer value into one operational
-view.
+FlowOps is a frontend SaaS dashboard prototype designed around a
+production-style architecture. It gives MSP project coordinators one
+order-control workspace for managing customer services across a third-party
+ordering partner and a fulfilment supplier.
 
-This repository contains the complete Phase 1 portfolio MVP and Phase 2 project
-creation workflow. It is intentionally a focused frontend application: the
-architecture demonstrates production-facing React patterns without adding
-state or styling libraries the product does not need.
+It connects the commercial request, CRF, partner reference, supplier portal
+reference, delivery milestones, exceptions, RACI ownership, and owner
+notifications in one tracker. The product is designed around one operational
+question:
 
-## What is included
+> What needs to happen next, and who is accountable for making it happen?
 
-- Responsive delivery dashboard with realistic implementation data
-- Active project, delivery attention, due-soon, and monthly value summaries
-- Search across customer, project, and owner
-- Status filtering with result counts and a clear-filter empty state
-- Semantic desktop project table that becomes labelled project cards on mobile
-- Loading, API error, and empty states
-- Accessible project creation dialog with focus management and a keyboard trap
-- Strongly typed project form with all nine requested delivery fields
-- Accessible client-side validation and first-invalid-field focus
-- TanStack Query mutation with optimistic cache updates and error rollback
-- Pending, success, and failure feedback
-- Typed API boundary supporting both demo mode and a real REST service
-- Unit and user-focused component tests with Vitest and React Testing Library
-- Strict TypeScript and ESLint configuration
+## Product preview
+
+![FlowOps order control tower showing delivery health, RACI ownership, search, and status filters](./docs/images/flowops-control-tower.png)
+
+<p align="center">
+  <img
+    src="./docs/images/flowops-mobile-order-card.png"
+    width="360"
+    alt="FlowOps mobile layout showing the at-risk filter and a responsive order card"
+  />
+</p>
+
+## Core workflows
+
+### End-to-end order journey
+
+Every order receives an eight-stage tracker:
+
+1. Customer agreement
+2. CRF raised
+3. Partner order accepted
+4. Supplier order placed
+5. Survey and design
+6. Delivery in progress
+7. Activation and test
+8. Handover complete
+
+Each milestone contains:
+
+- A clear completion outcome
+- The coordinator's next action
+- Responsible and accountable parties
+- Consulted and informed stakeholders
+- Automatic progress calculation
+- A guarded milestone-completion action
+
+### Reference chain
+
+The tracker keeps the three operational references together:
+
+- MSP customer request form (CRF)
+- Third-party ordering partner reference
+- Supplier portal order reference
+
+The new-order wizard starts a tracker at the correct milestone based on the
+references already available. Missing downstream references remain visibly
+pending.
+
+### Exception playbooks
+
+Coordinators can log common delay causes:
+
+- Excess Construction Charges (ECC)
+- Wayleaves
+- Site access
+- Survey failure
+- Network capacity
+- Stock or lead-time delays
+- Order data mismatches
+- Number porting
+
+Every exception automatically states:
+
+- Which organisation is accountable
+- Which role must resolve it
+- What the coordinator should do next
+- The next checkpoint date
+
+Orders with blocking exceptions cannot complete their current milestone until
+the issue is resolved. Resolving the final exception returns the order to an
+on-track state.
+
+### RACI accountability
+
+RACI changes with the current milestone. For example:
+
+- The MSP is accountable for CRF quality and supplier portal submission.
+- The third-party partner is accountable for accepting the partner order.
+- The supplier is accountable during survey, design, and delivery.
+- The customer becomes accountable for consent, access, or commercial
+  decisions such as ECC approval.
+
+The MSP order owner remains responsible for orchestration even when another
+party is accountable for the outcome.
+
+### Owner notifications
+
+FlowOps creates an in-app notification when:
+
+- A new tracker is assigned
+- A milestone is reached
+- An exception is logged
+- An exception is resolved
+
+The demo shows the event and intended recipient. A production backend can route
+the same event through email, Microsoft Teams, Slack, a service desk, or a
+workflow platform using an outbox/event integration.
+
+## Dashboard
+
+- Active, at-risk, blocked, and completed orders
+- Open exception count
+- Active monthly recurring value
+- Current accountability split across MSP, external supply chain, and customer
+- Search across customers, products, sites, owners, suppliers, and references
+- Status filtering
+- Semantic desktop table transforming into labelled mobile cards
+- Loading, empty, and API error states
 
 ## Run locally
 
-Prerequisites: Node.js 20.19 or newer.
+Prerequisite: Node.js 20.19 or newer.
 
 ```bash
 npm install
 npm run dev
 ```
-
-Open the local address printed by Vite.
 
 Quality checks:
 
@@ -46,29 +138,16 @@ npm run lint
 npm run build
 ```
 
-Optional coverage report:
+## Data modes
 
-```bash
-npm run test:coverage
-```
+All network and persistence logic lives in `src/api/projects.ts`.
 
-## Data and API modes
+### Demo mode
 
-FlowOps keeps networking and persistence out of UI components. Components call
-`getProjects` and `createProject` from `src/api/projects.ts`; TanStack Query owns
-the server-state lifecycle.
-
-### Demo mode (default)
-
-With no environment variable set, the application:
-
-1. Fetches seed data from `public/projects.json`.
-2. Saves newly created projects to browser local storage.
-3. Merges those projects into future reads.
-
-This makes the full creation journey usable on a static deployment without
-pretending a backend exists. The short artificial delay makes pending and
-optimistic states observable.
+Without an API URL, FlowOps loads realistic MSP orders from
+`public/projects.json` and saves created or updated orders in browser local
+storage. This makes creation, milestone advancement, exception logging, and
+resolution usable in a static frontend.
 
 ### REST mode
 
@@ -78,124 +157,96 @@ Copy `.env.example` to `.env` and set:
 VITE_API_URL=https://api.example.com
 ```
 
-The same frontend then uses:
+The frontend will use:
 
 - `GET {VITE_API_URL}/projects`
 - `POST {VITE_API_URL}/projects`
+- `PATCH {VITE_API_URL}/projects/{id}`
 
-The POST request sends `ProjectDraft` JSON and expects the saved `Project`,
-including `id` and `updatedAt`, in the response. No component changes are
-required.
+The API boundary can be renamed to `/orders` when a production contract is
+introduced without changing the UI components.
 
 ## Architecture
 
 ```text
 src/
 ├── api/
-│   └── projects.ts             Typed API/demo adapter
+│   └── projects.ts
 ├── components/
 │   ├── FeedbackMessage.tsx
 │   ├── StatusBadge.tsx
 │   └── SummaryCard.tsx
 ├── features/
 │   ├── dashboard/
-│   │   ├── summary.ts          Pure business calculations
-│   │   └── summary.test.ts
+│   │   └── summary.ts
+│   ├── orders/
+│   │   ├── NotificationCentre.tsx
+│   │   ├── OrderDetailModal.tsx
+│   │   └── orderJourney.ts
 │   └── projects/
 │       ├── ProjectFilters.tsx
 │       ├── ProjectForm.tsx
 │       ├── ProjectModal.tsx
-│       ├── ProjectTable.tsx
-│       └── component tests
+│       └── ProjectTable.tsx
 ├── lib/
 │   └── formatters.ts
-├── test/
-│   ├── fixtures.ts
-│   └── setup.ts
-├── App.test.tsx                Creation workflow integration tests
-├── App.tsx                     Query orchestration and page composition
-├── main.tsx                    Query client and application entry point
-├── styles.css                  Design system and responsive behaviour
-└── types.ts                    Project domain model
+├── App.tsx
+├── main.tsx
+├── styles.css
+└── types.ts
 ```
 
 ### State ownership
 
-- **Server state:** TanStack Query owns fetched projects, caching, loading,
-  retry, refetch, mutation, optimistic state, and rollback.
-- **Local interface state:** React owns search text, status selection, dialog
-  visibility, and ephemeral feedback.
-- **Form state:** `ProjectForm` owns typed field values and validation errors.
+- TanStack Query owns order data, caching, optimistic updates, and rollback.
+- React owns filters, open panels, selected order, and in-app notifications.
+- The three-step form owns its strongly typed values and validation.
+- Pure journey functions own stage definitions, RACI, progress, and playbooks.
 
-Redux would add a second state system without solving a current problem.
+Redux is intentionally omitted because the complex state is remote state,
+which TanStack Query already handles.
 
-### Optimistic creation
+## Architectural trade-offs
 
-Before a create request, FlowOps cancels in-flight reads, snapshots the project
-cache, and inserts a temporary project. A successful response replaces that
-temporary ID with the server record. A failure restores the snapshot and keeps
-the populated form open so the user can retry.
+- **Static demo data behind a typed service layer:** the current portfolio is
+  loaded from `public/projects.json`, while components depend only on the
+  typed API boundary. A real REST service can replace the demo adapter without
+  rewriting the interface.
+- **Browser persistence for the prototype:** create and update workflows use
+  local storage in demo mode. This makes the hosted frontend interactive, but
+  it is not presented as durable multi-user persistence.
+- **TanStack Query instead of Redux:** server-state caching, mutations,
+  optimistic updates, and rollback are handled by React Query; small interface
+  state stays local to React components.
+- **Semantic table plus mobile cards:** desktop users retain column-by-column
+  comparison, while responsive CSS turns each row into a labelled card without
+  duplicating the React markup.
+- **Plain CSS instead of Tailwind or a UI library:** this keeps responsive
+  layout, focus treatment, and component styling visible as portfolio evidence.
+- **In-app notification events:** milestone and exception events demonstrate
+  the workflow. Email, Teams, Slack, or service-desk delivery remains a roadmap
+  integration that requires a backend.
 
-### Accessibility
+## Accessibility
 
 - Skip navigation and visible keyboard focus
-- Semantic headings, landmarks, table, caption, and progress elements
-- Properly labelled fields and status feedback
-- `aria-invalid` and linked error descriptions
-- Dialog name/description, focus containment, Escape close, and background
-  scroll lock
-- Focus returns to the **New project** button after every close path
-- Responsive cards reuse the semantic table markup instead of duplicating
-  content
+- Semantic headings, landmarks, tables, captions, progress, and fieldsets
+- Dialog names, descriptions, Escape handling, and focus restoration
+- Linked field errors and first-invalid-field focus
+- Status announcements for successful and failed updates
+- Plain-language accountability and exception instructions
 - Reduced-motion support
 
-## Deliberate trade-offs
+## Test coverage
 
-### Plain CSS instead of Tailwind
+Vitest and React Testing Library cover:
 
-Plain CSS keeps responsive behaviour, focus states, table-to-card
-transformation, tokens, and media queries visible. In a larger application the
-styles could move to CSS Modules or an established company design system.
+- Portfolio summary rules
+- Search and status filters
+- Accessible order table rendering
+- Wizard opening, closing, validation, success, and rollback
+- Correct tracker stage from supplied references
+- RACI and exception-playbook visibility
+- Milestone advancement and owner notifications
 
-### Demo adapter instead of a bundled backend
-
-A backend would expand the scope beyond the requested React portfolio project.
-The API boundary still proves REST request construction and keeps replacement
-straightforward. Demo persistence makes all UI behaviour testable and usable
-today.
-
-### React Query instead of Redux
-
-The complex state here is remote state. React Query directly addresses its
-caching and mutation semantics; React is sufficient for the small amount of UI
-state.
-
-### Table plus responsive CSS instead of duplicate cards
-
-Desktop users need column comparison, which calls for a semantic table.
-Mobile users need scan-friendly cards. CSS reshapes the same rows, preventing
-two render paths from drifting apart.
-
-### Unit and component tests before end-to-end tests
-
-The current tests cover business rules and the main user workflow at high
-speed. Playwright is most valuable once routing, editing, and a deployed backend
-are part of the application.
-
-## Suggested Git history
-
-Create small, reviewable commits in this order:
-
-```text
-chore: initialise Vite React TypeScript application
-feat: add typed project domain and API adapter
-feat: build delivery summary and responsive project table
-feat: add project search and status filters
-feat: add accessible project creation modal
-feat: implement optimistic project creation and rollback
-test: cover dashboard calculations and project views
-test: cover project creation success and failure paths
-docs: document FlowOps architecture and roadmap
-```
-
-See [PROJECT_PLAN.md](./PROJECT_PLAN.md) for the phased roadmap.
+See [PROJECT_PLAN.md](./PROJECT_PLAN.md) for the next delivery phases.

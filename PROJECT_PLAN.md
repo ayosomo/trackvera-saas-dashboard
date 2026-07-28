@@ -1,79 +1,84 @@
-# FlowOps delivery plan
+# FlowOps product plan
 
 ## Product goal
 
-Give cross-functional delivery teams a fast, trustworthy view of implementation
-health and a low-friction way to keep the portfolio current.
+Help MSP project coordinators move every customer order through a multi-party
+supply chain without having to remember who owns a delay or what to do next.
 
-## Phase 1 — Portfolio MVP · Complete
+## Phase 1 — Portfolio control · Complete
 
-- [x] Customer implementation dashboard
-- [x] Delivery summary calculations
-- [x] Project search
-- [x] Status filter
-- [x] Responsive semantic project table and mobile cards
-- [x] Loading, API error, filtered-empty, and portfolio-empty states
-- [x] Typed query service
-- [x] Unit and component test foundations
-- [x] Accessible navigation, forms, progress, and focus states
+- [x] Managed-order dashboard
+- [x] Search and status filters
+- [x] Delivery-health and recurring-value summaries
+- [x] Responsive semantic order table
+- [x] Loading, error, and empty states
 
-Success signal: a delivery lead can find a project and identify portfolio risk
-in under 30 seconds on desktop or mobile.
+## Phase 2 — Order creation · Complete
 
-## Phase 2 — Mutations · Complete
+- [x] Three-step order wizard
+- [x] Customer, service, site, owner, supplier, and partner data
+- [x] CRF, partner, and supplier reference chain
+- [x] Automatic starting milestone
+- [x] Optimistic creation and rollback
+- [x] Automatic project tracker creation
 
-- [x] New project dialog
-- [x] Strongly typed nine-field project form
-- [x] Accessible client-side validation
-- [x] TanStack Query `useMutation`
-- [x] Optimistic cache insertion
-- [x] Error rollback
-- [x] Pending controls and progress feedback
-- [x] Success and failure messaging
-- [x] Escape, focus containment, and focus restoration
-- [x] Demo persistence and production REST POST path
-- [x] Tests for open/close, validation, success, failure, and keyboard use
+## Phase 3 — MSP orchestration · Complete
 
-Success signal: a user can create a valid project without losing context, and a
-failed request never leaves a phantom project in the portfolio.
+- [x] Eight-stage order journey
+- [x] Milestone-specific RACI
+- [x] Current accountability dashboard
+- [x] Milestone completion controls
+- [x] Owner milestone notifications
+- [x] ECC and wayleave exception handling
+- [x] Access, survey, capacity, stock, data, and porting playbooks
+- [x] Issue logging and resolution
+- [x] Progress blocking while exceptions remain open
+- [x] Tests for tracker, RACI, playbooks, and notifications
 
-## Phase 3 — Application architecture · Planned
+## Phase 4 — Production backend · Planned
 
-- [ ] React Router and project detail routes
-- [ ] URL-backed filters and shareable views
-- [ ] Server pagination and sorting
-- [ ] Edit project workflow with concurrency handling
-- [ ] Reusable form primitives
-- [x] Environment-based API URL
-- [ ] Not-found page
-- [ ] Permission-aware actions
+- [ ] Durable order and audit-event database
+- [ ] Role-based authentication and permissions
+- [ ] Customer, partner, and supplier organisation records
+- [ ] Immutable milestone and exception timeline
+- [ ] Email and Microsoft Teams notification delivery
+- [ ] Notification preferences and escalation rules
+- [ ] Supplier webhook and polling adapters
+- [ ] CRM and service-desk integration
+- [ ] Document attachments for CRF, quotes, surveys, and wayleaves
 
-Exit criterion: the portfolio scales beyond a single page and navigation state
-can be shared reliably.
+Exit criterion: every change is attributable, durable, permission-aware, and
+available across devices.
 
-## Phase 4 — Engineering maturity · Planned
+## Phase 5 — Operational intelligence · Planned
 
-- [ ] GitHub Actions quality pipeline
-- [ ] Playwright end-to-end coverage
-- [ ] Automated accessibility checks
-- [ ] Error boundary and production monitoring
-- [ ] Performance budget and measurement
-- [ ] Storybook component states
-- [ ] Pull request template
-- [ ] Conventional commit enforcement
+- [ ] SLA clocks by milestone and supplier
+- [ ] Exception ageing and overdue escalation
+- [ ] Predicted delivery-date risk
+- [ ] Supplier lead-time and rejection trends
+- [ ] Coordinator workload and queue balancing
+- [ ] First-time-right CRF quality reporting
+- [ ] Customer-facing order status view
+- [ ] Portfolio export and scheduled reporting
 
-Exit criterion: every change is automatically checked and critical workflows
-are monitored in production.
+Exit criterion: delivery leaders can identify systemic pain points before they
+become customer escalations.
 
-## Phase 5 — Operational intelligence · Future
+## Recommended production events
 
-- [ ] Risk ageing and ownership
-- [ ] Deadline and SLA notifications
-- [ ] Portfolio trends over time
-- [ ] Owner capacity signals
-- [ ] Customer health integrations
-- [ ] Role-based portfolio views
-- [ ] CSV export and scheduled reporting
+The backend should publish events such as:
 
-These items should be validated with Delivery and Product users before
-implementation; they are intentionally not speculative features in the MVP.
+```text
+order.created
+order.reference_added
+milestone.completed
+exception.logged
+exception.assigned
+exception.overdue
+exception.resolved
+target_date.changed
+order.handed_over
+```
+
+Each event should include the order, customer, owner, accountable organisation,
+previous and next states, actor, timestamp, and correlation ID.
