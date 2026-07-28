@@ -1,9 +1,6 @@
-import {
-  projectPriorities,
-  projectStatuses,
-  type ProjectDraft,
-} from "../../types";
-import { useId, useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
+import { getStageProgress } from "../orders/orderJourney";
+import { projectPriorities, type ProjectDraft } from "../../types";
 
 interface ProjectFormProps {
   onSubmit: (project: ProjectDraft) => void;
@@ -12,50 +9,76 @@ interface ProjectFormProps {
   submitError: string | null;
 }
 
-interface ProjectFormValues {
+interface OrderFormValues {
   customer: string;
   name: string;
+  product: string;
+  site: string;
   owner: string;
-  status: ProjectDraft["status"];
+  salesOwner: string;
+  thirdParty: string;
+  supplier: string;
+  crfReference: string;
+  thirdPartyReference: string;
+  supplierReference: string;
   priority: ProjectDraft["priority"];
-  progress: string;
   dueDate: string;
-  openRisks: string;
   monthlyValue: string;
 }
 
-type FormErrors = Partial<Record<keyof ProjectFormValues, string>>;
+type FormErrors = Partial<Record<keyof OrderFormValues, string>>;
 
-const initialValues: ProjectFormValues = {
+const initialValues: OrderFormValues = {
   customer: "",
   name: "",
+  product: "",
+  site: "",
   owner: "",
-  status: "On track",
+  salesOwner: "",
+  thirdParty: "",
+  supplier: "",
+  crfReference: "",
+  thirdPartyReference: "",
+  supplierReference: "",
   priority: "Medium",
-  progress: "0",
   dueDate: "",
-  openRisks: "0",
   monthlyValue: "",
 };
 
-function validate(values: ProjectFormValues): FormErrors {
-  const errors: FormErrors = {};
-  const progress = Number(values.progress);
-  const openRisks = Number(values.openRisks);
-  const monthlyValue = Number(values.monthlyValue);
+const formSteps = [
+  { label: "Customer & service", fields: ["customer", "name", "product", "site"] },
+  {
+    label: "Supply chain",
+    fields: ["thirdParty", "supplier", "crfReference"],
+  },
+  {
+    label: "Ownership & controls",
+    fields: ["owner", "salesOwner", "dueDate", "monthlyValue"],
+  },
+] as const;
 
-  if (!values.customer.trim()) errors.customer = "Enter a customer name.";
-  if (!values.name.trim()) errors.name = "Enter a project name.";
-  if (!values.owner.trim()) errors.owner = "Enter a project owner.";
-  if (!values.dueDate) errors.dueDate = "Choose a due date.";
-  if (!Number.isFinite(progress) || progress < 0 || progress > 100) {
-    errors.progress = "Progress must be between 0 and 100.";
-  }
-  if (!Number.isInteger(openRisks) || openRisks < 0) {
-    errors.openRisks = "Open risks must be a whole number of 0 or more.";
-  }
+function validate(values: OrderFormValues): FormErrors {
+  const errors: FormErrors = {};
+  const required: Array<[keyof OrderFormValues, string]> = [
+    ["customer", "Enter the customer name."],
+    ["name", "Enter an order or project name."],
+    ["product", "Enter the agreed product or service."],
+    ["site", "Enter the delivery site or programme scope."],
+    ["owner", "Enter the MSP order owner."],
+    ["salesOwner", "Enter the sales owner."],
+    ["thirdParty", "Enter the third-party ordering partner."],
+    ["supplier", "Enter the fulfilment supplier."],
+    ["crfReference", "Enter the CRF reference."],
+    ["dueDate", "Choose a target live date."],
+  ];
+
+  required.forEach(([field, message]) => {
+    if (!values[field].trim()) errors[field] = message;
+  });
+
+  const monthlyValue = Number(values.monthlyValue);
   if (!values.monthlyValue.trim()) {
-    errors.monthlyValue = "Enter the monthly value.";
+    errors.monthlyValue = "Enter the monthly contract value.";
   } else if (!Number.isFinite(monthlyValue) || monthlyValue < 0) {
     errors.monthlyValue = "Monthly value must be 0 or more.";
   }
@@ -69,242 +92,321 @@ export function ProjectForm({
   isSubmitting,
   submitError,
 }: ProjectFormProps) {
-  const formId = useId();
   const formRef = useRef<HTMLFormElement>(null);
+  const [step, setStep] = useState(0);
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<FormErrors>({});
 
-  function updateValue<Key extends keyof ProjectFormValues>(
+  function updateValue<Key extends keyof OrderFormValues>(
     key: Key,
-    value: ProjectFormValues[Key],
+    value: OrderFormValues[Key],
   ) {
     setValues((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: undefined }));
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const nextErrors = validate(values);
+  function focusFirstInvalid() {
+    window.setTimeout(() => {
+      formRef.current
+        ?.querySelector<HTMLElement>("[aria-invalid='true']")
+        ?.focus();
+    }, 0);
+  }
 
-    if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors);
-      window.setTimeout(() => {
-        formRef.current
-          ?.querySelector<HTMLElement>("[aria-invalid='true']")
-          ?.focus();
-      }, 0);
+  function continueToNextStep() {
+    const allErrors = validate(values);
+    const stepFields = new Set<string>(formSteps[step]?.fields ?? []);
+    const stepErrors = Object.fromEntries(
+      Object.entries(allErrors).filter(([field]) => stepFields.has(field)),
+    ) as FormErrors;
+
+    if (Object.keys(stepErrors).length > 0) {
+      setErrors((current) => ({ ...current, ...stepErrors }));
+      focusFirstInvalid();
       return;
     }
+    setStep((current) => Math.min(current + 1, formSteps.length - 1));
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (step < formSteps.length - 1) {
+      continueToNextStep();
+      return;
+    }
+
+    const nextErrors = validate(values);
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      const firstInvalidStep = formSteps.findIndex((item) =>
+        item.fields.some((field) => nextErrors[field]),
+      );
+      if (firstInvalidStep >= 0) setStep(firstInvalidStep);
+      focusFirstInvalid();
+      return;
+    }
+
+    const currentStage = values.supplierReference.trim()
+      ? "supplier-order"
+      : values.thirdPartyReference.trim()
+        ? "partner-order"
+        : "crf-raised";
 
     onSubmit({
       customer: values.customer.trim(),
       name: values.name.trim(),
+      product: values.product.trim(),
+      site: values.site.trim(),
       owner: values.owner.trim(),
-      status: values.status,
+      salesOwner: values.salesOwner.trim(),
+      thirdParty: values.thirdParty.trim(),
+      supplier: values.supplier.trim(),
+      crfReference: values.crfReference.trim(),
+      thirdPartyReference: values.thirdPartyReference.trim(),
+      supplierReference: values.supplierReference.trim(),
+      status: "On track",
       priority: values.priority,
-      progress: Number(values.progress),
+      progress: getStageProgress(currentStage),
+      currentStage,
       dueDate: values.dueDate,
-      openRisks: Number(values.openRisks),
+      openRisks: 0,
+      blockers: [],
       monthlyValue: Number(values.monthlyValue),
     });
   }
 
-  const errorId = (field: keyof ProjectFormValues) =>
-    errors[field] ? `${formId}-${field}-error` : undefined;
+  const describedBy = (field: keyof OrderFormValues) =>
+    errors[field] ? `${field}-error` : undefined;
 
   return (
     <form
       ref={formRef}
-      className="project-form"
+      className="project-form order-form"
       noValidate
       onSubmit={handleSubmit}
     >
-      {Object.keys(errors).length > 0 && (
-        <div className="form-error-summary" role="alert">
-          <strong>Check the highlighted fields.</strong>
-          <span>There are {Object.keys(errors).length} items to fix.</span>
-        </div>
-      )}
+      <ol className="form-steps" aria-label="New order steps">
+        {formSteps.map((item, index) => (
+          <li
+            className={
+              index === step
+                ? "form-step form-step--active"
+                : index < step
+                  ? "form-step form-step--complete"
+                  : "form-step"
+            }
+            key={item.label}
+            aria-current={index === step ? "step" : undefined}
+          >
+            <span>{index < step ? "✓" : index + 1}</span>
+            <strong>{item.label}</strong>
+          </li>
+        ))}
+      </ol>
 
       {submitError && (
         <div className="form-submit-error" role="alert">
-          <strong>Project not created.</strong>
+          <strong>Order tracker not created.</strong>
           <span>{submitError}</span>
         </div>
       )}
 
-      <div className="form-grid">
-        <label className="form-field">
-          <span>
-            Customer <em aria-hidden="true">*</em>
-          </span>
-          <input
-            autoFocus
-            type="text"
-            value={values.customer}
-            onChange={(event) => updateValue("customer", event.target.value)}
-            aria-invalid={Boolean(errors.customer)}
-            aria-describedby={errorId("customer")}
-            disabled={isSubmitting}
-          />
-          {errors.customer && (
-            <small id={errorId("customer")}>{errors.customer}</small>
-          )}
-        </label>
+      {step === 0 && (
+        <fieldset className="form-stage">
+          <legend>
+            <span>Step 1 of 3</span>
+            Customer and service
+          </legend>
+          <p>Capture the agreed commercial scope before the order enters delivery.</p>
+          <div className="form-grid">
+            <FormField
+              label="Customer"
+              value={values.customer}
+              error={errors.customer}
+              onChange={(value) => updateValue("customer", value)}
+              autoFocus
+            />
+            <FormField
+              label="Order / project name"
+              value={values.name}
+              error={errors.name}
+              onChange={(value) => updateValue("name", value)}
+            />
+            <FormField
+              label="Product or service"
+              value={values.product}
+              error={errors.product}
+              onChange={(value) => updateValue("product", value)}
+              placeholder="e.g. Managed Ethernet · 1 Gbps"
+            />
+            <FormField
+              label="Delivery site or scope"
+              value={values.site}
+              error={errors.site}
+              onChange={(value) => updateValue("site", value)}
+              placeholder="Site, postcode, or multi-site programme"
+            />
+          </div>
+        </fieldset>
+      )}
 
-        <label className="form-field">
-          <span>
-            Project name <em aria-hidden="true">*</em>
-          </span>
-          <input
-            type="text"
-            value={values.name}
-            onChange={(event) => updateValue("name", event.target.value)}
-            aria-invalid={Boolean(errors.name)}
-            aria-describedby={errorId("name")}
-            disabled={isSubmitting}
-          />
-          {errors.name && <small id={errorId("name")}>{errors.name}</small>}
-        </label>
+      {step === 1 && (
+        <fieldset className="form-stage">
+          <legend>
+            <span>Step 2 of 3</span>
+            Supply-chain references
+          </legend>
+          <p>
+            Link the customer request, partner order, and supplier portal order
+            in one tracker.
+          </p>
+          <div className="form-grid">
+            <FormField
+              label="Third-party ordering partner"
+              value={values.thirdParty}
+              error={errors.thirdParty}
+              onChange={(value) => updateValue("thirdParty", value)}
+              autoFocus
+              placeholder="e.g. ChannelLink"
+            />
+            <FormField
+              label="Fulfilment supplier"
+              value={values.supplier}
+              error={errors.supplier}
+              onChange={(value) => updateValue("supplier", value)}
+              placeholder="e.g. Openreach"
+            />
+            <FormField
+              label="CRF reference"
+              value={values.crfReference}
+              error={errors.crfReference}
+              onChange={(value) => updateValue("crfReference", value)}
+              placeholder="CRF-260727-001"
+            />
+            <FormField
+              label="Third-party order reference"
+              value={values.thirdPartyReference}
+              onChange={(value) => updateValue("thirdPartyReference", value)}
+              optional
+              placeholder="Add when the partner accepts"
+            />
+            <FormField
+              label="Supplier portal reference"
+              value={values.supplierReference}
+              onChange={(value) => updateValue("supplierReference", value)}
+              optional
+              placeholder="Add after portal submission"
+            />
+            <div className="reference-hint">
+              <span aria-hidden="true">i</span>
+              <p>
+                Missing downstream references remain marked as pending. The
+                tracker starts at the correct milestone automatically.
+              </p>
+            </div>
+          </div>
+        </fieldset>
+      )}
 
-        <label className="form-field">
-          <span>
-            Owner <em aria-hidden="true">*</em>
-          </span>
-          <input
-            type="text"
-            value={values.owner}
-            onChange={(event) => updateValue("owner", event.target.value)}
-            aria-invalid={Boolean(errors.owner)}
-            aria-describedby={errorId("owner")}
-            disabled={isSubmitting}
-          />
-          {errors.owner && <small id={errorId("owner")}>{errors.owner}</small>}
-        </label>
-
-        <label className="form-field">
-          <span>Status</span>
-          <select
-            value={values.status}
-            onChange={(event) =>
-              updateValue("status", event.target.value as ProjectDraft["status"])
-            }
-            disabled={isSubmitting}
-          >
-            {projectStatuses.map((status) => (
-              <option key={status}>{status}</option>
-            ))}
-          </select>
-        </label>
-
-        <label className="form-field">
-          <span>Priority</span>
-          <select
-            value={values.priority}
-            onChange={(event) =>
-              updateValue(
-                "priority",
-                event.target.value as ProjectDraft["priority"],
-              )
-            }
-            disabled={isSubmitting}
-          >
-            {projectPriorities.map((priority) => (
-              <option key={priority}>{priority}</option>
-            ))}
-          </select>
-        </label>
-
-        <label className="form-field">
-          <span>
-            Due date <em aria-hidden="true">*</em>
-          </span>
-          <input
-            type="date"
-            value={values.dueDate}
-            onChange={(event) => updateValue("dueDate", event.target.value)}
-            aria-invalid={Boolean(errors.dueDate)}
-            aria-describedby={errorId("dueDate")}
-            disabled={isSubmitting}
-          />
-          {errors.dueDate && (
-            <small id={errorId("dueDate")}>{errors.dueDate}</small>
-          )}
-        </label>
-
-        <label className="form-field form-field--wide">
-          <span className="range-label">
-            <span>Progress</span>
-            <output htmlFor={`${formId}-progress`}>{values.progress}%</output>
-          </span>
-          <input
-            id={`${formId}-progress`}
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-            value={values.progress}
-            onChange={(event) => updateValue("progress", event.target.value)}
-            aria-invalid={Boolean(errors.progress)}
-            aria-describedby={errorId("progress")}
-            disabled={isSubmitting}
-          />
-          {errors.progress && (
-            <small id={errorId("progress")}>{errors.progress}</small>
-          )}
-        </label>
-
-        <label className="form-field">
-          <span>Open risks</span>
-          <input
-            type="number"
-            min="0"
-            step="1"
-            value={values.openRisks}
-            onChange={(event) => updateValue("openRisks", event.target.value)}
-            aria-invalid={Boolean(errors.openRisks)}
-            aria-describedby={errorId("openRisks")}
-            disabled={isSubmitting}
-          />
-          {errors.openRisks && (
-            <small id={errorId("openRisks")}>{errors.openRisks}</small>
-          )}
-        </label>
-
-        <label className="form-field">
-          <span>
-            Monthly value (£) <em aria-hidden="true">*</em>
-          </span>
-          <input
-            type="number"
-            min="0"
-            step="100"
-            inputMode="decimal"
-            placeholder="e.g. 12500"
-            value={values.monthlyValue}
-            onChange={(event) => updateValue("monthlyValue", event.target.value)}
-            aria-invalid={Boolean(errors.monthlyValue)}
-            aria-describedby={errorId("monthlyValue")}
-            disabled={isSubmitting}
-          />
-          {errors.monthlyValue && (
-            <small id={errorId("monthlyValue")}>{errors.monthlyValue}</small>
-          )}
-        </label>
-      </div>
-
-      <p className="required-note">
-        <span aria-hidden="true">*</span> Required fields
-      </p>
+      {step === 2 && (
+        <fieldset className="form-stage">
+          <legend>
+            <span>Step 3 of 3</span>
+            Ownership and controls
+          </legend>
+          <p>Set the people and dates that will drive proactive order management.</p>
+          <div className="form-grid">
+            <FormField
+              label="MSP order owner"
+              value={values.owner}
+              error={errors.owner}
+              onChange={(value) => updateValue("owner", value)}
+              autoFocus
+            />
+            <FormField
+              label="Sales owner"
+              value={values.salesOwner}
+              error={errors.salesOwner}
+              onChange={(value) => updateValue("salesOwner", value)}
+            />
+            <label className="form-field">
+              <span>
+                Priority <em aria-hidden="true">*</em>
+              </span>
+              <select
+                value={values.priority}
+                onChange={(event) =>
+                  updateValue(
+                    "priority",
+                    event.target.value as ProjectDraft["priority"],
+                  )
+                }
+              >
+                {projectPriorities.map((priority) => (
+                  <option key={priority}>{priority}</option>
+                ))}
+              </select>
+            </label>
+            <label className="form-field">
+              <span>
+                Target live date <em aria-hidden="true">*</em>
+              </span>
+              <input
+                type="date"
+                value={values.dueDate}
+                onChange={(event) => updateValue("dueDate", event.target.value)}
+                aria-invalid={Boolean(errors.dueDate)}
+                aria-describedby={describedBy("dueDate")}
+              />
+              {errors.dueDate && (
+                <small id={describedBy("dueDate")}>{errors.dueDate}</small>
+              )}
+            </label>
+            <label className="form-field">
+              <span>
+                Monthly contract value (£) <em aria-hidden="true">*</em>
+              </span>
+              <input
+                type="number"
+                min="0"
+                step="100"
+                value={values.monthlyValue}
+                onChange={(event) =>
+                  updateValue("monthlyValue", event.target.value)
+                }
+                aria-invalid={Boolean(errors.monthlyValue)}
+                aria-describedby={describedBy("monthlyValue")}
+                placeholder="e.g. 12500"
+              />
+              {errors.monthlyValue && (
+                <small id={describedBy("monthlyValue")}>
+                  {errors.monthlyValue}
+                </small>
+              )}
+            </label>
+            <div className="tracker-created-note">
+              <span aria-hidden="true">✓</span>
+              <div>
+                <strong>Tracker created automatically</strong>
+                <p>
+                  Eight milestones, stage RACI, reference controls, owner
+                  notifications, and exception playbooks will be ready.
+                </p>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+      )}
 
       <div className="form-actions">
         <button
           type="button"
           className="button button--secondary"
-          onClick={onCancel}
+          onClick={step === 0 ? onCancel : () => setStep((value) => value - 1)}
           disabled={isSubmitting}
         >
-          Cancel
+          {step === 0 ? "Cancel" : "← Back"}
         </button>
         <button
           type="submit"
@@ -312,9 +414,56 @@ export function ProjectForm({
           disabled={isSubmitting}
         >
           {isSubmitting && <span className="button__spinner" aria-hidden="true" />}
-          {isSubmitting ? "Creating project…" : "Create project"}
+          {isSubmitting
+            ? "Creating tracker…"
+            : step === formSteps.length - 1
+              ? "Create order tracker"
+              : "Continue →"}
         </button>
       </div>
     </form>
+  );
+}
+
+interface FormFieldProps {
+  label: string;
+  value: string;
+  error?: string;
+  placeholder?: string;
+  optional?: boolean;
+  autoFocus?: boolean;
+  onChange: (value: string) => void;
+}
+
+function FormField({
+  label,
+  value,
+  error,
+  placeholder,
+  optional,
+  autoFocus,
+  onChange,
+}: FormFieldProps) {
+  const errorId = `${label.toLowerCase().replaceAll(/[^a-z]+/g, "-")}-error`;
+  return (
+    <label className="form-field">
+      <span>
+        {label}{" "}
+        {optional ? (
+          <small className="optional-label">Optional</small>
+        ) : (
+          <em aria-hidden="true">*</em>
+        )}
+      </span>
+      <input
+        autoFocus={autoFocus}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? errorId : undefined}
+        placeholder={placeholder}
+      />
+      {error && <small id={errorId}>{error}</small>}
+    </label>
   );
 }

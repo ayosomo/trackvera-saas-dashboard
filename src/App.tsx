@@ -1,13 +1,23 @@
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
-import { createProject, getProjects } from "./api/projects";
+import {
+  createProject,
+  getProjects,
+  updateProject,
+} from "./api/projects";
 import { FeedbackMessage } from "./components/FeedbackMessage";
 import { SummaryCard } from "./components/SummaryCard";
 import { calculateSummary } from "./features/dashboard/summary";
+import {
+  NotificationCentre,
+  type OrderNotification,
+} from "./features/orders/NotificationCentre";
+import { OrderDetailModal } from "./features/orders/OrderDetailModal";
+import {
+  advanceOrder,
+  getNextStage,
+  getStage,
+} from "./features/orders/orderJourney";
 import { ProjectFilters } from "./features/projects/ProjectFilters";
 import { ProjectModal } from "./features/projects/ProjectModal";
 import { ProjectTable } from "./features/projects/ProjectTable";
@@ -15,15 +25,56 @@ import {
   compactCurrencyFormatter,
   formatLongDate,
 } from "./lib/formatters";
-import type { Project, ProjectDraft, ProjectFilters as Filters } from "./types";
+import type {
+  OrderBlocker,
+  Project,
+  ProjectDraft,
+  ProjectFilters as Filters,
+} from "./types";
 
 const projectsQueryKey = ["projects"] as const;
 const initialFilters: Filters = { search: "", status: "All statuses" };
 
 interface MutationContext {
   previousProjects: Project[];
-  optimisticId: string;
+  optimisticId?: string;
 }
+
+interface UpdateVariables {
+  project: Project;
+  notification: {
+    title: string;
+    detail: string;
+  };
+}
+
+const initialNotifications: OrderNotification[] = [
+  {
+    id: "notification-1",
+    owner: "Rowan Bell",
+    title: "Milestone reached · Activation",
+    detail: "Fieldwork Energy moved into activation and service testing.",
+    timestamp: "Today, 08:30",
+    unread: true,
+  },
+  {
+    id: "notification-2",
+    owner: "Theo Grant",
+    title: "Exception assigned · ECC",
+    detail:
+      "Veridian Bank requires customer approval for £8,400 construction charges.",
+    timestamp: "Today, 09:15",
+    unread: true,
+  },
+  {
+    id: "notification-3",
+    owner: "Maya Chen",
+    title: "Milestone reached · Handover",
+    detail: "CivicWorks completed service handover and moved into support.",
+    timestamp: "18 Jul, 17:00",
+    unread: false,
+  },
+];
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error
@@ -36,6 +87,12 @@ export function App() {
   const newProjectButtonRef = useRef<HTMLButtonElement>(null);
   const [filters, setFilters] = useState(initialFilters);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
+    null,
+  );
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] =
+    useState<OrderNotification[]>(initialNotifications);
   const [feedback, setFeedback] = useState<{
     kind: "success" | "error";
     message: string;
@@ -68,7 +125,6 @@ export function App() {
         optimisticProject,
         ...previousProjects,
       ]);
-
       return { previousProjects, optimisticId };
     },
     onError: (_error, _draft, context) => {
@@ -77,7 +133,8 @@ export function App() {
       }
       setFeedback({
         kind: "error",
-        message: "The project was not saved. Your existing data is unchanged.",
+        message:
+          "The order tracker was not saved. Your existing portfolio is unchanged.",
       });
     },
     onSuccess: (createdProject, _draft, context) => {
@@ -86,11 +143,59 @@ export function App() {
           project.id === context?.optimisticId ? createdProject : project,
         ),
       );
+      addNotification(
+        createdProject.owner,
+        "New order tracker assigned",
+        `${createdProject.customer} was created at ${getStage(createdProject.currentStage).label}.`,
+      );
       setFeedback({
         kind: "success",
-        message: `${createdProject.customer} was added successfully.`,
+        message: `${createdProject.customer} tracker is ready and ${createdProject.owner} was notified.`,
       });
       closeModal();
+    },
+  });
+
+  const updateMutation = useMutation<
+    Project,
+    Error,
+    UpdateVariables,
+    MutationContext
+  >({
+    mutationFn: ({ project }) => updateProject(project),
+    onMutate: async ({ project }) => {
+      await queryClient.cancelQueries({ queryKey: projectsQueryKey });
+      const previousProjects =
+        queryClient.getQueryData<Project[]>(projectsQueryKey) ?? [];
+      queryClient.setQueryData<Project[]>(projectsQueryKey, (projects = []) =>
+        projects.map((item) => (item.id === project.id ? project : item)),
+      );
+      return { previousProjects };
+    },
+    onError: (_error, _variables, context) => {
+      if (context) {
+        queryClient.setQueryData(projectsQueryKey, context.previousProjects);
+      }
+      setFeedback({
+        kind: "error",
+        message: "The order update failed and has been rolled back.",
+      });
+    },
+    onSuccess: (savedProject, variables) => {
+      queryClient.setQueryData<Project[]>(projectsQueryKey, (projects = []) =>
+        projects.map((item) =>
+          item.id === savedProject.id ? savedProject : item,
+        ),
+      );
+      addNotification(
+        savedProject.owner,
+        variables.notification.title,
+        variables.notification.detail,
+      );
+      setFeedback({
+        kind: "success",
+        message: `${savedProject.owner} was notified of the order update.`,
+      });
     },
   });
 
@@ -99,21 +204,70 @@ export function App() {
     [projectsQuery.data],
   );
   const summary = useMemo(() => calculateSummary(projects), [projects]);
+  const selectedProject =
+    projects.find((project) => project.id === selectedProjectId) ?? null;
+
   const filteredProjects = useMemo(() => {
     const search = filters.search.trim().toLocaleLowerCase();
-
     return projects.filter((project) => {
       const matchesStatus =
         filters.status === "All statuses" || project.status === filters.status;
       const matchesSearch =
         !search ||
-        [project.customer, project.name, project.owner].some((value) =>
-          value.toLocaleLowerCase().includes(search),
-        );
-
+        [
+          project.customer,
+          project.name,
+          project.product,
+          project.site,
+          project.owner,
+          project.salesOwner,
+          project.thirdParty,
+          project.supplier,
+          project.crfReference,
+          project.thirdPartyReference,
+          project.supplierReference,
+        ].some((value) => value.toLocaleLowerCase().includes(search));
       return matchesStatus && matchesSearch;
     });
   }, [filters, projects]);
+
+  const accountability = useMemo(() => {
+    const active = projects.filter((project) => project.status !== "Complete");
+    return {
+      msp: active.filter(
+        (project) => getStage(project.currentStage).accountable === "MSP",
+      ).length,
+      external: active.filter((project) =>
+        ["Third-party partner", "Supplier"].includes(
+          getStage(project.currentStage).accountable,
+        ),
+      ).length,
+      customer: active.filter(
+        (project) => getStage(project.currentStage).accountable === "Customer",
+      ).length,
+    };
+  }, [projects]);
+
+  const openExceptions = projects.reduce(
+    (total, project) =>
+      total +
+      project.blockers.filter((blocker) => blocker.status === "Open").length,
+    0,
+  );
+
+  function addNotification(owner: string, title: string, detail: string) {
+    setNotifications((current) => [
+      {
+        id: `notification-${Date.now()}`,
+        owner,
+        title,
+        detail,
+        timestamp: "Just now",
+        unread: true,
+      },
+      ...current,
+    ]);
+  }
 
   function openModal() {
     projectMutation.reset();
@@ -131,8 +285,68 @@ export function App() {
     projectMutation.mutate(draft);
   }
 
+  function advanceMilestone(project: Project) {
+    const nextStage = getNextStage(project.currentStage);
+    if (!nextStage) return;
+    const updated = advanceOrder(project);
+    updateMutation.mutate({
+      project: updated,
+      notification: {
+        title: `Milestone reached · ${nextStage.shortLabel}`,
+        detail: `${project.customer} moved to ${nextStage.label}. ${nextStage.nextAction}`,
+      },
+    });
+  }
+
+  function addBlocker(project: Project, blocker: OrderBlocker) {
+    const updated: Project = {
+      ...project,
+      blockers: [blocker, ...project.blockers],
+      openRisks: project.openRisks + 1,
+      status: ["ECC", "Wayleave", "Survey failure", "Network capacity"].includes(
+        blocker.type,
+      )
+        ? "Blocked"
+        : "At risk",
+    };
+    updateMutation.mutate({
+      project: updated,
+      notification: {
+        title: `Exception assigned · ${blocker.type}`,
+        detail: `${blocker.accountableParty} is accountable. ${blocker.nextAction}`,
+      },
+    });
+  }
+
+  function resolveBlocker(project: Project, blockerId: string) {
+    const blockers = project.blockers.map((blocker) =>
+      blocker.id === blockerId
+        ? ({ ...blocker, status: "Resolved" } as const)
+        : blocker,
+    );
+    const remaining = blockers.filter(
+      (blocker) => blocker.status === "Open",
+    ).length;
+    const resolved = project.blockers.find(
+      (blocker) => blocker.id === blockerId,
+    );
+    updateMutation.mutate({
+      project: {
+        ...project,
+        blockers,
+        openRisks: remaining,
+        status: remaining === 0 ? "On track" : project.status,
+      },
+      notification: {
+        title: `Exception resolved · ${resolved?.type ?? "Order issue"}`,
+        detail: `${project.customer} can continue through ${getStage(project.currentStage).label}.`,
+      },
+    });
+  }
+
   const hasFilters =
     filters.search.trim().length > 0 || filters.status !== "All statuses";
+  const unreadCount = notifications.filter((item) => item.unread).length;
 
   return (
     <div className="app-shell">
@@ -147,24 +361,25 @@ export function App() {
           </span>
           <span>FlowOps</span>
         </a>
+        <p className="sidebar__workspace-label">MSP Order Control</p>
         <nav>
           <a className="nav-link nav-link--active" href="#overview">
             <span aria-hidden="true">⌂</span>
-            Overview
+            Control tower
           </a>
-          <a className="nav-link" href="#projects">
+          <a className="nav-link" href="#orders">
             <span aria-hidden="true">▦</span>
-            Projects
+            Orders
             <span className="nav-link__count">{projects.length}</span>
           </a>
-          <a className="nav-link" href="#risks">
+          <a className="nav-link" href="#exceptions">
             <span aria-hidden="true">△</span>
-            Risks
-            <span className="nav-link__count">{summary.atRiskProjects}</span>
+            Exceptions
+            <span className="nav-link__count">{openExceptions}</span>
           </a>
-          <a className="nav-link" href="#team">
-            <span aria-hidden="true">♙</span>
-            Team
+          <a className="nav-link" href="#raci">
+            <span aria-hidden="true">◎</span>
+            RACI ownership
           </a>
         </nav>
         <div className="sidebar__footer">
@@ -173,7 +388,7 @@ export function App() {
           </div>
           <div>
             <strong>Delivery Ops</strong>
-            <span>Workspace</span>
+            <span>Order coordination</span>
           </div>
           <button type="button" aria-label="Workspace options">
             ···
@@ -185,18 +400,32 @@ export function App() {
         <header className="page-header" id="overview">
           <div>
             <p className="eyebrow">{formatLongDate(new Date())}</p>
-            <h1>Delivery overview</h1>
-            <p>Keep implementation momentum visible and risks actionable.</p>
+            <h1>Order control tower</h1>
+            <p>
+              One journey, three supply-chain parties, and no ambiguity about
+              the next move.
+            </p>
           </div>
-          <button
-            ref={newProjectButtonRef}
-            type="button"
-            className="button button--primary new-project-button"
-            onClick={openModal}
-          >
-            <span aria-hidden="true">＋</span>
-            New project
-          </button>
+          <div className="header-actions">
+            <button
+              type="button"
+              className="notification-button"
+              onClick={() => setIsNotificationsOpen(true)}
+              aria-label={`Open notifications, ${unreadCount} unread`}
+            >
+              <span aria-hidden="true">♢</span>
+              {unreadCount > 0 && <strong>{unreadCount}</strong>}
+            </button>
+            <button
+              ref={newProjectButtonRef}
+              type="button"
+              className="button button--primary new-project-button"
+              onClick={openModal}
+            >
+              <span aria-hidden="true">＋</span>
+              New order
+            </button>
+          </div>
         </header>
 
         <FeedbackMessage
@@ -209,7 +438,7 @@ export function App() {
         ) : projectsQuery.isError ? (
           <div className="query-state" role="alert">
             <span aria-hidden="true">!</span>
-            <h2>We couldn’t load the dashboard</h2>
+            <h2>We couldn’t load the order portfolio</h2>
             <p>{getErrorMessage(projectsQuery.error)}</p>
             <button
               className="button button--primary"
@@ -221,26 +450,26 @@ export function App() {
           </div>
         ) : (
           <>
-            <section className="summary-grid" aria-label="Delivery summary">
+            <section className="summary-grid" aria-label="Order summary">
               <SummaryCard
-                label="Active projects"
+                label="Active orders"
                 value={summary.activeProjects}
                 detail={`${projects.filter((project) => project.status === "On track").length} currently on track`}
                 icon="▦"
                 tone="ink"
               />
               <SummaryCard
-                label="Delivery attention"
+                label="Need attention"
                 value={summary.atRiskProjects}
                 detail="At risk or blocked"
                 icon="△"
                 tone="amber"
               />
               <SummaryCard
-                label="Due in 30 days"
-                value={summary.dueSoon}
-                detail="Upcoming milestones"
-                icon="◷"
+                label="Open exceptions"
+                value={openExceptions}
+                detail="With an assigned playbook"
+                icon="!"
                 tone="blue"
               />
               <SummaryCard
@@ -252,15 +481,51 @@ export function App() {
               />
             </section>
 
-            <section className="projects-panel" id="projects">
+            <section
+              className="accountability-strip"
+              aria-label="Current accountability"
+              id="raci"
+            >
+              <div className="accountability-strip__title">
+                <span>RACI now</span>
+                <strong>Who must move the order forward?</strong>
+              </div>
+              <div>
+                <span className="accountability-dot accountability-dot--msp" />
+                <p>
+                  <strong>{accountability.msp}</strong>
+                  MSP action
+                </p>
+              </div>
+              <div>
+                <span className="accountability-dot accountability-dot--external" />
+                <p>
+                  <strong>{accountability.external}</strong>
+                  Partner / supplier
+                </p>
+              </div>
+              <div>
+                <span className="accountability-dot accountability-dot--customer" />
+                <p>
+                  <strong>{accountability.customer}</strong>
+                  Customer action
+                </p>
+              </div>
+              <p className="accountability-strip__note">
+                Order owners remain responsible for orchestration; accountability
+                follows the milestone and issue playbook.
+              </p>
+            </section>
+
+            <section className="projects-panel" id="orders">
               <div className="projects-panel__heading">
                 <div>
-                  <p className="eyebrow">Implementation portfolio</p>
-                  <h2>Customer projects</h2>
+                  <p className="eyebrow">End-to-end fulfilment</p>
+                  <h2>Managed service orders</h2>
                 </div>
                 <span className="live-indicator">
                   <span aria-hidden="true" />
-                  Live portfolio
+                  Live accountability
                 </span>
               </div>
               <ProjectFilters
@@ -272,6 +537,7 @@ export function App() {
                 projects={filteredProjects}
                 hasFilters={hasFilters}
                 onClearFilters={() => setFilters(initialFilters)}
+                onOpenProject={(project) => setSelectedProjectId(project.id)}
               />
             </section>
           </>
@@ -289,13 +555,37 @@ export function App() {
         onClose={closeModal}
         onSubmit={submitProject}
       />
+
+      <OrderDetailModal
+        project={selectedProject}
+        isUpdating={updateMutation.isPending}
+        onClose={() => setSelectedProjectId(null)}
+        onAdvance={advanceMilestone}
+        onAddBlocker={addBlocker}
+        onResolveBlocker={resolveBlocker}
+      />
+
+      <NotificationCentre
+        isOpen={isNotificationsOpen}
+        notifications={notifications}
+        onClose={() => setIsNotificationsOpen(false)}
+        onMarkAllRead={() =>
+          setNotifications((items) =>
+            items.map((item) => ({ ...item, unread: false })),
+          )
+        }
+      />
     </div>
   );
 }
 
 function DashboardSkeleton() {
   return (
-    <div className="dashboard-skeleton" aria-busy="true" aria-label="Loading dashboard">
+    <div
+      className="dashboard-skeleton"
+      aria-busy="true"
+      aria-label="Loading dashboard"
+    >
       <div className="skeleton-summary">
         {Array.from({ length: 4 }, (_, index) => (
           <div className="skeleton-card" key={index} />

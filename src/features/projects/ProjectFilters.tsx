@@ -14,13 +14,13 @@ export function ProjectFilters({
   return (
     <div className="project-filters" aria-label="Project filters">
       <label className="search-field">
-        <span className="sr-only">Search projects</span>
+        <span className="sr-only">Search orders</span>
         <span aria-hidden="true" className="search-field__icon">
           ⌕
         </span>
         <input
           type="search"
-          placeholder="Search customer, project or owner…"
+          placeholder="Search customer, reference, supplier or owner…"
           value={filters.search}
           onChange={(event) =>
             onChange({ ...filters, search: event.target.value })
@@ -47,7 +47,7 @@ export function ProjectFilters({
       </label>
 
       <p className="project-filters__count" aria-live="polite">
-        {resultCount} {resultCount === 1 ? "project" : "projects"}
+        {resultCount} {resultCount === 1 ? "order" : "orders"}
       </p>
     </div>
   );

@@ -34,6 +34,6 @@ describe("ProjectFilters", () => {
       search: "Northstar",
       status: "At risk",
     });
-    expect(screen.getByText("1 project")).toBeInTheDocument();
+    expect(screen.getByText("1 order")).toBeInTheDocument();
   });
 });

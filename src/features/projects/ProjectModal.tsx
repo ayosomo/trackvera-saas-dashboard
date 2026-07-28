@@ -82,24 +82,24 @@ export function ProjectModal({
         className="modal"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="new-project-title"
-        aria-describedby="new-project-description"
+        aria-labelledby="new-order-title"
+        aria-describedby="new-order-description"
         onKeyDown={handleKeyDown}
       >
         <div className="modal__header">
           <div>
-            <p className="eyebrow">New implementation</p>
-            <h2 id="new-project-title">Create a project</h2>
-            <p id="new-project-description">
-              Add the key delivery details. You can update them as the work
-              progresses.
+            <p className="eyebrow">New managed service order</p>
+            <h2 id="new-order-title">Create an order tracker</h2>
+            <p id="new-order-description">
+              Connect the commercial request, supply chain, ownership, and
+              delivery journey from day one.
             </p>
           </div>
           <button
             className="modal__close"
             type="button"
             onClick={onClose}
-            aria-label="Close new project dialog"
+            aria-label="Close new order dialog"
             disabled={isSubmitting}
           >
             ×

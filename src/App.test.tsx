@@ -2,7 +2,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createProject, getProjects } from "./api/projects";
+import {
+  createProject,
+  getProjects,
+  updateProject,
+} from "./api/projects";
 import { App } from "./App";
 import { sampleProjects } from "./test/fixtures";
 import type { Project } from "./types";
@@ -10,10 +14,12 @@ import type { Project } from "./types";
 vi.mock("./api/projects", () => ({
   getProjects: vi.fn(),
   createProject: vi.fn(),
+  updateProject: vi.fn(),
 }));
 
 const getProjectsMock = vi.mocked(getProjects);
 const createProjectMock = vi.mocked(createProject);
+const updateProjectMock = vi.mocked(updateProject);
 
 function renderApp() {
   const queryClient = new QueryClient({
@@ -22,7 +28,6 @@ function renderApp() {
       mutations: { retry: false },
     },
   });
-
   return render(
     <QueryClientProvider client={queryClient}>
       <App />
@@ -30,114 +35,200 @@ function renderApp() {
   );
 }
 
-async function openProjectModal() {
+async function openOrderModal() {
   renderApp();
   const user = userEvent.setup();
-  await screen.findByRole("heading", { name: "Delivery overview" });
-  await user.click(screen.getByRole("button", { name: /new project/i }));
-  await screen.findByRole("dialog", { name: "Create a project" });
+  await screen.findByRole("heading", { name: "Order control tower" });
+  await user.click(screen.getByRole("button", { name: "New order" }));
+  await screen.findByRole("dialog", { name: "Create an order tracker" });
   return user;
 }
 
-async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>) {
+async function fillOrderWizard(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText(/^customer/i), "Atlas Labs");
-  await user.type(screen.getByLabelText(/^project name/i), "Platform launch");
-  await user.type(screen.getByLabelText(/^owner/i), "Jamie Singh");
-  await user.type(screen.getByLabelText(/^due date/i), "2026-10-15");
-  await user.type(screen.getByLabelText(/^monthly value/i), "14500");
+  await user.type(
+    screen.getByLabelText(/^order \/ project name/i),
+    "Platform launch",
+  );
+  await user.type(screen.getByLabelText(/^product or service/i), "Managed DIA");
+  await user.type(
+    screen.getByLabelText(/^delivery site or scope/i),
+    "London, EC2A 1AA",
+  );
+  await user.click(screen.getByRole("button", { name: /continue/i }));
+
+  await user.type(
+    screen.getByLabelText(/^third-party ordering partner/i),
+    "ChannelLink",
+  );
+  await user.type(
+    screen.getByLabelText(/^fulfilment supplier/i),
+    "Openreach",
+  );
+  await user.type(screen.getByLabelText(/^crf reference/i), "CRF-NEW-001");
+  await user.type(
+    screen.getByLabelText(/^third-party order reference/i),
+    "CL-NEW-001",
+  );
+  await user.click(screen.getByRole("button", { name: /continue/i }));
+
+  await user.type(screen.getByLabelText(/^msp order owner/i), "Jamie Singh");
+  await user.type(screen.getByLabelText(/^sales owner/i), "Alex Morgan");
+  await user.type(screen.getByLabelText(/^target live date/i), "2026-10-15");
+  await user.type(
+    screen.getByLabelText(/^monthly contract value/i),
+    "14500",
+  );
 }
 
 beforeEach(() => {
   getProjectsMock.mockResolvedValue(sampleProjects);
   createProjectMock.mockReset();
+  updateProjectMock.mockImplementation(async (project) => project);
 });
 
-describe("project creation workflow", () => {
-  it("opens and closes the modal, restoring focus to the trigger", async () => {
-    const user = await openProjectModal();
-    const trigger = screen.getByRole("button", { name: /^new project$/i });
+describe("MSP order orchestration", () => {
+  it("opens and closes the order wizard, restoring focus to the trigger", async () => {
+    const user = await openOrderModal();
+    const trigger = screen.getByRole("button", { name: "New order" });
 
     expect(screen.getByLabelText(/^customer/i)).toHaveFocus();
     await user.click(
-      screen.getByRole("button", { name: "Close new project dialog" }),
+      screen.getByRole("button", { name: "Close new order dialog" }),
     );
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     await waitFor(() => expect(trigger).toHaveFocus());
   });
 
-  it("shows accessible errors and focuses the first invalid field", async () => {
-    const user = await openProjectModal();
-    await user.click(screen.getByRole("button", { name: "Create project" }));
+  it("validates each creation step and focuses the first invalid field", async () => {
+    const user = await openOrderModal();
+    await user.click(screen.getByRole("button", { name: /continue/i }));
 
+    expect(screen.getByText("Enter the customer name.")).toBeInTheDocument();
     expect(
-      screen.getByText("Check the highlighted fields."),
+      screen.getByText("Enter an order or project name."),
     ).toBeInTheDocument();
-    expect(screen.getByText("Enter a customer name.")).toBeInTheDocument();
-    expect(screen.getByText("Enter a project name.")).toBeInTheDocument();
-    expect(screen.getByText("Choose a due date.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Enter the agreed product or service."),
+    ).toBeInTheDocument();
     await waitFor(() =>
       expect(screen.getByLabelText(/^customer/i)).toHaveFocus(),
     );
     expect(createProjectMock).not.toHaveBeenCalled();
   });
 
-  it("submits a valid project and confirms success", async () => {
+  it("creates a tracker at the correct reference milestone and notifies its owner", async () => {
     const createdProject: Project = {
-      id: "project-new",
+      id: "order-new",
       customer: "Atlas Labs",
       name: "Platform launch",
+      product: "Managed DIA",
+      site: "London, EC2A 1AA",
       owner: "Jamie Singh",
+      salesOwner: "Alex Morgan",
+      thirdParty: "ChannelLink",
+      supplier: "Openreach",
+      crfReference: "CRF-NEW-001",
+      thirdPartyReference: "CL-NEW-001",
+      supplierReference: "",
       status: "On track",
       priority: "Medium",
-      progress: 0,
+      progress: 38,
+      currentStage: "partner-order",
       dueDate: "2026-10-15",
       openRisks: 0,
+      blockers: [],
       monthlyValue: 14500,
       updatedAt: "2026-07-27T12:00:00.000Z",
     };
     createProjectMock.mockResolvedValue(createdProject);
-    const user = await openProjectModal();
-    await fillRequiredFields(user);
-
-    await user.click(screen.getByRole("button", { name: "Create project" }));
+    const user = await openOrderModal();
+    await fillOrderWizard(user);
+    await user.click(
+      screen.getByRole("button", { name: "Create order tracker" }),
+    );
 
     expect(createProjectMock).toHaveBeenCalledWith(
       expect.objectContaining({
         customer: "Atlas Labs",
-        name: "Platform launch",
-        monthlyValue: 14500,
+        currentStage: "partner-order",
+        thirdPartyReference: "CL-NEW-001",
+        supplierReference: "",
       }),
       expect.anything(),
     );
     expect(
-      await screen.findByText("Atlas Labs was added successfully."),
+      await screen.findByText(
+        "Atlas Labs tracker is ready and Jamie Singh was notified.",
+      ),
     ).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByText("Atlas Labs")).toBeInTheDocument();
   });
 
-  it("rolls back the optimistic row and keeps the form open on failure", async () => {
+  it("rolls back a failed tracker creation and keeps the populated wizard open", async () => {
     createProjectMock.mockRejectedValue(new Error("Service unavailable"));
-    const user = await openProjectModal();
-    await fillRequiredFields(user);
+    const user = await openOrderModal();
+    await fillOrderWizard(user);
+    await user.click(
+      screen.getByRole("button", { name: "Create order tracker" }),
+    );
 
-    await user.click(screen.getByRole("button", { name: "Create project" }));
-
-    expect(await screen.findByText("Project not created.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Order tracker not created."),
+    ).toBeInTheDocument();
     expect(screen.getByText("Service unavailable")).toBeInTheDocument();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.queryByText("Atlas Labs")).not.toBeInTheDocument();
-    expect(screen.getByText("Northstar Health")).toBeInTheDocument();
   });
 
-  it("closes with Escape and returns focus", async () => {
-    const user = await openProjectModal();
-    const trigger = screen.getByRole("button", { name: /^new project$/i });
+  it("shows RACI ownership and an exception resolution playbook", async () => {
+    renderApp();
+    const user = userEvent.setup();
+    await screen.findByText("Veridian Bank");
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open Veridian Bank order tracker",
+      }),
+    );
 
-    await user.keyboard("{Escape}");
+    expect(
+      screen.getByRole("dialog", { name: "Veridian Bank" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Who owns what?")).toBeInTheDocument();
+    expect(screen.getByText("Construction charges awaiting approval.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Validate charges and obtain customer approval."),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Customer").length).toBeGreaterThan(0);
+  });
 
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    await waitFor(() => expect(trigger).toHaveFocus());
+  it("advances a clear milestone and creates an owner notification", async () => {
+    renderApp();
+    const user = userEvent.setup();
+    await screen.findByText("Northstar Health");
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open Northstar Health order tracker",
+      }),
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: "Complete milestone → Activation",
+      }),
+    );
+
+    await waitFor(() =>
+      expect(updateProjectMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customer: "Northstar Health",
+          currentStage: "activation",
+        }),
+      ),
+    );
+    expect(
+      await screen.findByText("Maya Chen was notified of the order update."),
+    ).toBeInTheDocument();
   });
 });

@@ -29,7 +29,10 @@ function readDemoProjects(): Project[] {
 
 function saveDemoProject(project: Project): void {
   const projects = readDemoProjects();
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify([project, ...projects]));
+  window.localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify([project, ...projects.filter((item) => item.id !== project.id)]),
+  );
 }
 
 function createId(): string {
@@ -51,7 +54,14 @@ export async function getProjects(
   });
   const projects = await readJson<Project[]>(response);
 
-  return apiBaseUrl ? projects : [...readDemoProjects(), ...projects];
+  if (apiBaseUrl) return projects;
+
+  const savedProjects = readDemoProjects();
+  const savedIds = new Set(savedProjects.map((project) => project.id));
+  return [
+    ...savedProjects,
+    ...projects.filter((project) => !savedIds.has(project.id)),
+  ];
 }
 
 export async function createProject(draft: ProjectDraft): Promise<Project> {
@@ -79,4 +89,26 @@ export async function createProject(draft: ProjectDraft): Promise<Project> {
   saveDemoProject(project);
 
   return project;
+}
+
+export async function updateProject(project: Project): Promise<Project> {
+  const apiBaseUrl = getApiBaseUrl();
+
+  if (apiBaseUrl) {
+    const response = await fetch(`${apiBaseUrl}/projects/${project.id}`, {
+      method: "PATCH",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(project),
+    });
+
+    return readJson<Project>(response);
+  }
+
+  await new Promise((resolve) => window.setTimeout(resolve, 350));
+  const updatedProject = { ...project, updatedAt: new Date().toISOString() };
+  saveDemoProject(updatedProject);
+  return updatedProject;
 }
