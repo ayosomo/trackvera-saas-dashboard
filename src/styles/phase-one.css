@@ -1,0 +1,149 @@
+html,
+body,
+.app-shell {
+  overflow-x: hidden;
+}
+
+.data-freshness {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.button--refresh {
+  min-height: 36px;
+  padding: 7px 12px;
+  font-size: 12px;
+}
+
+.fatal-error {
+  display: grid;
+  width: min(620px, calc(100% - 32px));
+  min-height: 100vh;
+  align-content: center;
+  gap: 14px;
+  margin: 0 auto;
+}
+
+.fatal-error h1,
+.fatal-error p {
+  margin: 0;
+}
+
+.fatal-error .button {
+  width: fit-content;
+  margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+  .orders-panel__heading {
+    align-items: flex-start;
+    gap: 14px;
+    flex-direction: column;
+  }
+
+  .data-freshness {
+    width: 100%;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+
+  .order-filters input,
+  .order-filters select,
+  .form-field input,
+  .form-field select,
+  .issue-form input,
+  .issue-form select {
+    font-size: 16px;
+  }
+
+  .eyebrow,
+  .summary-card__label,
+  .summary-card__detail,
+  .order-filters__count,
+  .order-table td::before,
+  .order-name div > span,
+  .order-name small,
+  .status-badge,
+  .stage-cell > span,
+  .stage-cell strong,
+  .party-chip,
+  .exception-count,
+  .exception-clear,
+  .tracker-meta span,
+  .journey-step__title > span,
+  .journey-step > div > p,
+  .current-stage-action span,
+  .current-stage-action p,
+  .all-clear p,
+  .blocker-card__type,
+  .blocker-card dt,
+  .blocker-card dd,
+  .playbook-action span,
+  .playbook-action p,
+  .raci-panel__intro,
+  .raci-row dt,
+  .raci-row dd,
+  .accountability-callout span,
+  .accountability-callout p,
+  .advance-help,
+  .notification-toolbar,
+  .notification-toolbar button,
+  .notification-item p,
+  .notification-item small,
+  .notification-panel > footer p,
+  .notification-empty,
+  .form-step,
+  .form-step > span,
+  .form-stage legend span,
+  .form-stage > p,
+  .optional-label,
+  .reference-hint p,
+  .tracker-created-note p {
+    font-size: 12px !important;
+  }
+
+  .accountability-strip > div p,
+  .issue-form label {
+    font-size: 12px;
+  }
+
+  .order-name strong,
+  .owner,
+  .table-action,
+  .section-heading h3,
+  .raci-panel h3,
+  .journey-step__title strong,
+  .current-stage-action strong,
+  .all-clear strong,
+  .blocker-card h4,
+  .accountability-callout strong,
+  .notification-item strong,
+  .form-stage legend,
+  .tracker-created-note strong,
+  .button--small,
+  .resolve-button,
+  .advance-button,
+  .issue-form .button {
+    font-size: 14px;
+  }
+
+  .notification-item > div > div span {
+    font-size: 12px;
+  }
+
+  .accountability-strip > div p strong {
+    font-size: 18px;
+  }
+}
+
+@media (forced-colors: active) {
+  .status-badge,
+  .party-chip,
+  .priority-dot,
+  .accountability-dot {
+    forced-color-adjust: auto;
+  }
+}
