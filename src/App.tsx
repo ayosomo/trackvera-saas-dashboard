@@ -46,6 +46,9 @@ interface UpdateVariables {
     title: string;
     detail: string;
   };
+  successMessage?: string;
+  errorMessage?: string;
+  closeEditorOnSuccess?: boolean;
 }
 
 const initialNotifications: OrderNotification[] = [
@@ -87,6 +90,7 @@ export function App() {
   const newProjectButtonRef = useRef<HTMLButtonElement>(null);
   const [filters, setFilters] = useState(initialFilters);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
     null,
   );
@@ -172,13 +176,15 @@ export function App() {
       );
       return { previousProjects };
     },
-    onError: (_error, _variables, context) => {
+    onError: (_error, variables, context) => {
       if (context) {
         queryClient.setQueryData(projectsQueryKey, context.previousProjects);
       }
       setFeedback({
         kind: "error",
-        message: "The order update failed and has been rolled back.",
+        message:
+          variables.errorMessage ??
+          "The order update failed and has been rolled back.",
       });
     },
     onSuccess: (savedProject, variables) => {
@@ -194,8 +200,14 @@ export function App() {
       );
       setFeedback({
         kind: "success",
-        message: `${savedProject.owner} was notified of the order update.`,
+        message:
+          variables.successMessage ??
+          `${savedProject.owner} was notified of the order update.`,
       });
+      if (variables.closeEditorOnSuccess) {
+        setEditingProjectId(null);
+        setSelectedProjectId(savedProject.id);
+      }
     },
   });
 
@@ -206,6 +218,8 @@ export function App() {
   const summary = useMemo(() => calculateSummary(projects), [projects]);
   const selectedProject =
     projects.find((project) => project.id === selectedProjectId) ?? null;
+  const editingProject =
+    projects.find((project) => project.id === editingProjectId) ?? null;
 
   const filteredProjects = useMemo(() => {
     const search = filters.search.trim().toLocaleLowerCase();
@@ -271,11 +285,19 @@ export function App() {
 
   function openModal() {
     projectMutation.reset();
+    setEditingProjectId(null);
     setFeedback(null);
     setIsModalOpen(true);
   }
 
   function closeModal() {
+    if (editingProjectId) {
+      const projectId = editingProjectId;
+      setEditingProjectId(null);
+      setSelectedProjectId(projectId);
+      return;
+    }
+
     setIsModalOpen(false);
     window.setTimeout(() => newProjectButtonRef.current?.focus(), 0);
   }
@@ -283,6 +305,32 @@ export function App() {
   function submitProject(draft: ProjectDraft) {
     setFeedback(null);
     projectMutation.mutate(draft);
+  }
+
+  function openProjectEditor(project: Project) {
+    updateMutation.reset();
+    setFeedback(null);
+    setSelectedProjectId(null);
+    setEditingProjectId(project.id);
+  }
+
+  function submitProjectEdit(draft: ProjectDraft) {
+    if (!editingProject) return;
+
+    setFeedback(null);
+    updateMutation.mutate({
+      project: {
+        ...editingProject,
+        ...draft,
+      },
+      notification: {
+        title: "Project details updated",
+        detail: `${draft.customer} commercial and delivery details were updated.`,
+      },
+      successMessage: `${draft.customer} was updated successfully.`,
+      errorMessage: "The project changes failed and have been rolled back.",
+      closeEditorOnSuccess: true,
+    });
   }
 
   function advanceMilestone(project: Project) {
@@ -545,21 +593,30 @@ export function App() {
       </main>
 
       <ProjectModal
-        isOpen={isModalOpen}
-        isSubmitting={projectMutation.isPending}
+        isOpen={isModalOpen || editingProjectId !== null}
+        mode={editingProjectId ? "edit" : "create"}
+        project={editingProject ?? undefined}
+        isSubmitting={
+          editingProjectId ? updateMutation.isPending : projectMutation.isPending
+        }
         submitError={
-          projectMutation.isError
-            ? getErrorMessage(projectMutation.error)
-            : null
+          editingProjectId
+            ? updateMutation.isError
+              ? getErrorMessage(updateMutation.error)
+              : null
+            : projectMutation.isError
+              ? getErrorMessage(projectMutation.error)
+              : null
         }
         onClose={closeModal}
-        onSubmit={submitProject}
+        onSubmit={editingProjectId ? submitProjectEdit : submitProject}
       />
 
       <OrderDetailModal
         project={selectedProject}
         isUpdating={updateMutation.isPending}
         onClose={() => setSelectedProjectId(null)}
+        onEdit={openProjectEditor}
         onAdvance={advanceMilestone}
         onAddBlocker={addBlocker}
         onResolveBlocker={resolveBlocker}

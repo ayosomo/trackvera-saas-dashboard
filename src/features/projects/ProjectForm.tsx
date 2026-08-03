@@ -1,8 +1,16 @@
 import { useRef, useState, type FormEvent } from "react";
 import { getStageProgress } from "../orders/orderJourney";
-import { projectPriorities, type ProjectDraft } from "../../types";
+import {
+  projectPriorities,
+  type Project,
+  type ProjectDraft,
+} from "../../types";
+
+export type ProjectFormMode = "create" | "edit";
 
 interface ProjectFormProps {
+  mode: ProjectFormMode;
+  project?: Project;
   onSubmit: (project: ProjectDraft) => void;
   onCancel: () => void;
   isSubmitting: boolean;
@@ -28,7 +36,7 @@ interface OrderFormValues {
 
 type FormErrors = Partial<Record<keyof OrderFormValues, string>>;
 
-const initialValues: OrderFormValues = {
+const emptyValues: OrderFormValues = {
   customer: "",
   name: "",
   product: "",
@@ -44,6 +52,27 @@ const initialValues: OrderFormValues = {
   dueDate: "",
   monthlyValue: "",
 };
+
+function getInitialValues(project?: Project): OrderFormValues {
+  if (!project) return emptyValues;
+
+  return {
+    customer: project.customer,
+    name: project.name,
+    product: project.product,
+    site: project.site,
+    owner: project.owner,
+    salesOwner: project.salesOwner,
+    thirdParty: project.thirdParty,
+    supplier: project.supplier,
+    crfReference: project.crfReference,
+    thirdPartyReference: project.thirdPartyReference,
+    supplierReference: project.supplierReference,
+    priority: project.priority,
+    dueDate: project.dueDate,
+    monthlyValue: String(project.monthlyValue),
+  };
+}
 
 const formSteps = [
   { label: "Customer & service", fields: ["customer", "name", "product", "site"] },
@@ -87,6 +116,8 @@ function validate(values: OrderFormValues): FormErrors {
 }
 
 export function ProjectForm({
+  mode,
+  project,
   onSubmit,
   onCancel,
   isSubmitting,
@@ -94,7 +125,7 @@ export function ProjectForm({
 }: ProjectFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [step, setStep] = useState(0);
-  const [values, setValues] = useState(initialValues);
+  const [values, setValues] = useState(() => getInitialValues(project));
   const [errors, setErrors] = useState<FormErrors>({});
 
   function updateValue<Key extends keyof OrderFormValues>(
@@ -147,11 +178,13 @@ export function ProjectForm({
       return;
     }
 
-    const currentStage = values.supplierReference.trim()
-      ? "supplier-order"
-      : values.thirdPartyReference.trim()
-        ? "partner-order"
-        : "crf-raised";
+    const currentStage =
+      project?.currentStage ??
+      (values.supplierReference.trim()
+        ? "supplier-order"
+        : values.thirdPartyReference.trim()
+          ? "partner-order"
+          : "crf-raised");
 
     onSubmit({
       customer: values.customer.trim(),
@@ -165,13 +198,13 @@ export function ProjectForm({
       crfReference: values.crfReference.trim(),
       thirdPartyReference: values.thirdPartyReference.trim(),
       supplierReference: values.supplierReference.trim(),
-      status: "On track",
+      status: project?.status ?? "On track",
       priority: values.priority,
-      progress: getStageProgress(currentStage),
+      progress: project?.progress ?? getStageProgress(currentStage),
       currentStage,
       dueDate: values.dueDate,
-      openRisks: 0,
-      blockers: [],
+      openRisks: project?.openRisks ?? 0,
+      blockers: project?.blockers ?? [],
       monthlyValue: Number(values.monthlyValue),
     });
   }
@@ -186,7 +219,10 @@ export function ProjectForm({
       noValidate
       onSubmit={handleSubmit}
     >
-      <ol className="form-steps" aria-label="New order steps">
+      <ol
+        className="form-steps"
+        aria-label={mode === "create" ? "New order steps" : "Edit order steps"}
+      >
         {formSteps.map((item, index) => (
           <li
             className={
@@ -207,7 +243,11 @@ export function ProjectForm({
 
       {submitError && (
         <div className="form-submit-error" role="alert">
-          <strong>Order tracker not created.</strong>
+          <strong>
+            {mode === "create"
+              ? "Order tracker not created."
+              : "Project changes not saved."}
+          </strong>
           <span>{submitError}</span>
         </div>
       )}
@@ -388,10 +428,15 @@ export function ProjectForm({
             <div className="tracker-created-note">
               <span aria-hidden="true">✓</span>
               <div>
-                <strong>Tracker created automatically</strong>
+                <strong>
+                  {mode === "create"
+                    ? "Tracker created automatically"
+                    : "Workflow controls preserved"}
+                </strong>
                 <p>
-                  Eight milestones, stage RACI, reference controls, owner
-                  notifications, and exception playbooks will be ready.
+                  {mode === "create"
+                    ? "Eight milestones, stage RACI, reference controls, owner notifications, and exception playbooks will be ready."
+                    : "Existing milestones, RACI ownership, blockers, and progress stay attached to this project."}
                 </p>
               </div>
             </div>
@@ -415,9 +460,13 @@ export function ProjectForm({
         >
           {isSubmitting && <span className="button__spinner" aria-hidden="true" />}
           {isSubmitting
-            ? "Creating tracker…"
+            ? mode === "create"
+              ? "Creating tracker…"
+              : "Saving changes…"
             : step === formSteps.length - 1
-              ? "Create order tracker"
+              ? mode === "create"
+                ? "Create order tracker"
+                : "Save project changes"
               : "Continue →"}
         </button>
       </div>

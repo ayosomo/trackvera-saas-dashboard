@@ -20,6 +20,7 @@ interface OrderDetailModalProps {
   project: Project | null;
   isUpdating: boolean;
   onClose: () => void;
+  onEdit: (project: Project) => void;
   onAdvance: (project: Project) => void;
   onAddBlocker: (project: Project, blocker: OrderBlocker) => void;
   onResolveBlocker: (project: Project, blockerId: string) => void;
@@ -29,6 +30,7 @@ export function OrderDetailModal({
   project,
   isUpdating,
   onClose,
+  onEdit,
   onAdvance,
   onAddBlocker,
   onResolveBlocker,
@@ -106,16 +108,26 @@ export function OrderDetailModal({
               {project.name} · {project.product}
             </p>
           </div>
-          <button
-            ref={closeButtonRef}
-            type="button"
-            className="modal__close"
-            onClick={onClose}
-            disabled={isUpdating}
-            aria-label="Close order tracker"
-          >
-            ×
-          </button>
+          <div className="tracker-header__actions">
+            <button
+              type="button"
+              className="button button--secondary button--small"
+              onClick={() => onEdit(project)}
+              disabled={isUpdating}
+            >
+              Edit details
+            </button>
+            <button
+              ref={closeButtonRef}
+              type="button"
+              className="modal__close"
+              onClick={onClose}
+              disabled={isUpdating}
+              aria-label="Close order tracker"
+            >
+              ×
+            </button>
+          </div>
         </header>
 
         <div className="tracker-meta">

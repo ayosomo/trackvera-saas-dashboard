@@ -1,10 +1,12 @@
 import { useEffect, useRef, type KeyboardEvent, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
-import type { ProjectDraft } from "../../types";
-import { ProjectForm } from "./ProjectForm";
+import type { Project, ProjectDraft } from "../../types";
+import { ProjectForm, type ProjectFormMode } from "./ProjectForm";
 
 interface ProjectModalProps {
   isOpen: boolean;
+  mode: ProjectFormMode;
+  project?: Project;
   isSubmitting: boolean;
   submitError: string | null;
   onClose: () => void;
@@ -22,12 +24,17 @@ const focusableSelector = [
 
 export function ProjectModal({
   isOpen,
+  mode,
+  project,
   isSubmitting,
   submitError,
   onClose,
   onSubmit,
 }: ProjectModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const isEditing = mode === "edit";
+  const titleId = "project-form-title";
+  const descriptionId = "project-form-description";
 
   useEffect(() => {
     if (!isOpen) return;
@@ -82,30 +89,39 @@ export function ProjectModal({
         className="modal"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="new-order-title"
-        aria-describedby="new-order-description"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
         onKeyDown={handleKeyDown}
       >
         <div className="modal__header">
           <div>
-            <p className="eyebrow">New managed service order</p>
-            <h2 id="new-order-title">Create an order tracker</h2>
-            <p id="new-order-description">
-              Connect the commercial request, supply chain, ownership, and
-              delivery journey from day one.
+            <p className="eyebrow">
+              {isEditing ? "Project details" : "New managed service order"}
+            </p>
+            <h2 id={titleId}>
+              {isEditing
+                ? `Edit ${project?.customer ?? "project"}`
+                : "Create an order tracker"}
+            </h2>
+            <p id={descriptionId}>
+              {isEditing
+                ? "Update commercial, supply-chain, ownership, and delivery details without resetting the order journey."
+                : "Connect the commercial request, supply chain, ownership, and delivery journey from day one."}
             </p>
           </div>
           <button
             className="modal__close"
             type="button"
             onClick={onClose}
-            aria-label="Close new order dialog"
+            aria-label={isEditing ? "Close project editor" : "Close new order dialog"}
             disabled={isSubmitting}
           >
             ×
           </button>
         </div>
         <ProjectForm
+          mode={mode}
+          project={project}
           onSubmit={onSubmit}
           onCancel={onClose}
           isSubmitting={isSubmitting}
