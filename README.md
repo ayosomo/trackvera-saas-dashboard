@@ -60,6 +60,15 @@ The new-order wizard starts a tracker at the correct milestone based on the
 references already available. Missing downstream references remain visibly
 pending.
 
+### Project creation and updates
+
+The accessible three-step form is shared by creation and editing. It provides
+field-level validation, disables submission while a request is pending, and
+keeps entered values available after an error. TanStack Query applies changes
+optimistically and restores the previous portfolio when the API rejects a
+request. Editing commercial or ownership details preserves the project ID,
+delivery milestone, RACI state, progress, and exception history.
+
 ### Exception playbooks
 
 Coordinators can log common delay causes:
@@ -245,6 +254,7 @@ Vitest and React Testing Library cover:
 - Search and status filters
 - Accessible order table rendering
 - Wizard opening, closing, validation, success, and rollback
+- Project editing, preserved workflow state, optimistic success, and rollback
 - Correct tracker stage from supplied references
 - RACI and exception-playbook visibility
 - Milestone advancement and owner notifications

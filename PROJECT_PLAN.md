@@ -13,13 +13,20 @@ supply chain without having to remember who owns a delay or what to do next.
 - [x] Responsive semantic order table
 - [x] Loading, error, and empty states
 
-## Phase 2 — Order creation · Complete
+## Phase 2 — Project creation and updates · Complete
 
 - [x] Three-step order wizard
+- [x] Shared strongly typed form for creation and editing
+- [x] Accessible modal behaviour and focus management
+- [x] Client-side validation with field-level errors
 - [x] Customer, service, site, owner, supplier, and partner data
 - [x] CRF, partner, and supplier reference chain
 - [x] Automatic starting milestone
-- [x] Optimistic creation and rollback
+- [x] Project editing without resetting milestones, RACI, or blockers
+- [x] TanStack Query create and update mutations
+- [x] Optimistic creation and editing with rollback
+- [x] Success, error, and owner notifications
+- [x] Component tests for create, edit, validation, and failure behaviour
 - [x] Automatic project tracker creation
 
 ## Phase 3 — MSP orchestration · Complete
