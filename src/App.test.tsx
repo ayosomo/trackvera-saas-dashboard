@@ -81,6 +81,20 @@ async function fillOrderWizard(user: ReturnType<typeof userEvent.setup>) {
   );
 }
 
+async function openProjectEditor(customer = "Veridian Bank") {
+  renderApp();
+  const user = userEvent.setup();
+  await screen.findByText(customer);
+  await user.click(
+    screen.getByRole("button", {
+      name: `Open ${customer} order tracker`,
+    }),
+  );
+  await user.click(screen.getByRole("button", { name: "Edit details" }));
+  await screen.findByRole("dialog", { name: `Edit ${customer}` });
+  return user;
+}
+
 beforeEach(() => {
   getProjectsMock.mockResolvedValue(sampleProjects);
   createProjectMock.mockReset();
@@ -181,6 +195,66 @@ describe("MSP order orchestration", () => {
     expect(screen.getByText("Service unavailable")).toBeInTheDocument();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.queryByText("Atlas Labs")).not.toBeInTheDocument();
+  });
+
+  it("edits a project without resetting its delivery journey", async () => {
+    const user = await openProjectEditor();
+    const customerField = screen.getByLabelText(/^customer/i);
+
+    expect(customerField).toHaveValue("Veridian Bank");
+    await user.clear(customerField);
+    await user.type(customerField, "Veridian Group");
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await user.click(
+      screen.getByRole("button", { name: "Save project changes" }),
+    );
+
+    await waitFor(() =>
+      expect(updateProjectMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "project-2",
+          customer: "Veridian Group",
+          currentStage: "survey-design",
+          openRisks: 1,
+        }),
+      ),
+    );
+    expect(
+      await screen.findByText("Veridian Group was updated successfully."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Veridian Group" }),
+    ).toBeInTheDocument();
+  });
+
+  it("rolls back a failed project edit and retains the entered form values", async () => {
+    updateProjectMock.mockRejectedValueOnce(new Error("Update unavailable"));
+    const user = await openProjectEditor();
+    const customerField = screen.getByLabelText(/^customer/i);
+
+    await user.clear(customerField);
+    await user.type(customerField, "Veridian Group");
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    await user.click(
+      screen.getByRole("button", { name: "Save project changes" }),
+    );
+
+    expect(
+      await screen.findByText("Project changes not saved."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Update unavailable")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /back/i }));
+    await user.click(screen.getByRole("button", { name: /back/i }));
+    expect(screen.getByLabelText(/^customer/i)).toHaveValue("Veridian Group");
+
+    await user.click(
+      screen.getByRole("button", { name: "Close project editor" }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: "Veridian Bank" }),
+    ).toBeInTheDocument();
   });
 
   it("shows RACI ownership and an exception resolution playbook", async () => {
