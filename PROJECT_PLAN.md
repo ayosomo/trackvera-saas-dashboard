@@ -52,7 +52,37 @@ supply chain without having to remember who owns a delay or what to do next.
 - [x] Pure tests for list rules and URL state
 - [x] Component coverage for direct routes and filter persistence
 
-## Phase 4 — Production backend · Planned
+## Phase 4 — Production readiness and delivery · In progress
+
+One-week sprint goal: prove that FlowOps' critical user journeys work through
+the production bundle and can become a dependable delivery gate.
+
+### Day 1 — E2E foundation · Complete
+
+- [x] Install and configure Playwright Test with managed Chromium
+- [x] Build and serve the production bundle from the Playwright web server
+- [x] Exercise REST mode through deterministic route fixtures
+- [x] Load, search, filter, sort, and paginate the order portfolio
+- [x] Open project details and preserve URL-backed list state on return
+- [x] Create an order through the complete three-step wizard
+- [x] Edit an existing order and reconcile the server response
+- [x] Verify optimistic rollback after a failed mutation
+- [x] Recover from project API failures
+- [x] Verify project-not-found and route-level 404 behaviour
+- [x] Verify keyboard entry, validation, dismissal, and focus restoration
+- [x] Retain traces, screenshots, and video only when a test fails
+
+Day 1 exit criterion: eight meaningful E2E scenarios pass automatically
+against the compiled production build.
+
+### Days 2–5 · Planned
+
+The remaining sprint work will cover automated delivery checks, broader
+accessibility and resilience gates, deployment evidence, and release
+documentation. Each day will be scoped before implementation so the sprint
+stays focused on production readiness rather than test-count growth.
+
+## Phase 5 — Production backend · Planned
 
 - [ ] Durable order and audit-event database
 - [ ] Role-based authentication and permissions
@@ -67,7 +97,7 @@ supply chain without having to remember who owns a delay or what to do next.
 Exit criterion: every change is attributable, durable, permission-aware, and
 available across devices.
 
-## Phase 5 — Operational intelligence · Planned
+## Phase 6 — Operational intelligence · Planned
 
 - [ ] SLA clocks by milestone and supplier
 - [ ] Exception ageing and overdue escalation

@@ -135,19 +135,26 @@ workflow platform using an outbox/event integration.
 
 ## Run locally
 
-Prerequisite: Node.js 20.19 or newer.
+Prerequisites: Node.js 20.19 or newer and pnpm 11.
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 Quality checks:
 
 ```bash
-npm run test
-npm run lint
-npm run build
+pnpm run test
+pnpm run lint
+pnpm run build
+pnpm run test:e2e
+```
+
+Install Playwright's managed Chromium browser once before the first E2E run:
+
+```bash
+pnpm exec playwright install chromium
 ```
 
 ## Data modes
@@ -290,5 +297,23 @@ Vitest and React Testing Library cover:
 - RACI and exception-playbook visibility
 - Milestone advancement and owner notifications
 - Direct project routes and not-found navigation
+
+Playwright covers eight critical journeys through the compiled production
+bundle:
+
+- Loading, searching, filtering, sorting, and paginating the order portfolio
+- Opening a dedicated project route and restoring URL-backed filters on return
+- Completing the three-step project creation workflow
+- Editing a project and reconciling the saved API response
+- Rolling an optimistic edit back after a failed mutation
+- Recovering from an unavailable project API
+- Recovering from missing projects and unknown routes
+- Using skip navigation, the creation modal, validation, Escape dismissal, and
+  focus restoration with the keyboard
+
+`pnpm run test:e2e` builds FlowOps with `VITE_API_URL=/api`, starts the Vite
+production preview on port 4180, and supplies a deterministic API fixture at
+the repository boundary. This exercises the real production bundle while
+keeping success and failure scenarios isolated from external services.
 
 See [PROJECT_PLAN.md](./PROJECT_PLAN.md) for the next delivery phases.
