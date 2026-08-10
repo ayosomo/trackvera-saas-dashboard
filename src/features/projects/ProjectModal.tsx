@@ -1,6 +1,6 @@
 import { useEffect, useRef, type KeyboardEvent, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
-import type { Project, ProjectDraft } from "../../types";
+import type { Project, ProjectDraft } from "../../domain/project";
 import { ProjectForm, type ProjectFormMode } from "./ProjectForm";
 
 interface ProjectModalProps {

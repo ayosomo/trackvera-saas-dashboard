@@ -1,10 +1,16 @@
 import { useRef, useState, type FormEvent } from "react";
+import {
+  DateField,
+  NumberField,
+  SelectField,
+  TextField,
+} from "../../components/form/FormControls";
 import { getStageProgress } from "../orders/orderJourney";
 import {
   projectPriorities,
   type Project,
   type ProjectDraft,
-} from "../../types";
+} from "../../domain/project";
 
 export type ProjectFormMode = "create" | "edit";
 
@@ -209,9 +215,6 @@ export function ProjectForm({
     });
   }
 
-  const describedBy = (field: keyof OrderFormValues) =>
-    errors[field] ? `${field}-error` : undefined;
-
   return (
     <form
       ref={formRef}
@@ -260,27 +263,27 @@ export function ProjectForm({
           </legend>
           <p>Capture the agreed commercial scope before the order enters delivery.</p>
           <div className="form-grid">
-            <FormField
+            <TextField
               label="Customer"
               value={values.customer}
               error={errors.customer}
               onChange={(value) => updateValue("customer", value)}
               autoFocus
             />
-            <FormField
+            <TextField
               label="Order / project name"
               value={values.name}
               error={errors.name}
               onChange={(value) => updateValue("name", value)}
             />
-            <FormField
+            <TextField
               label="Product or service"
               value={values.product}
               error={errors.product}
               onChange={(value) => updateValue("product", value)}
               placeholder="e.g. Managed Ethernet · 1 Gbps"
             />
-            <FormField
+            <TextField
               label="Delivery site or scope"
               value={values.site}
               error={errors.site}
@@ -302,7 +305,7 @@ export function ProjectForm({
             in one tracker.
           </p>
           <div className="form-grid">
-            <FormField
+            <TextField
               label="Third-party ordering partner"
               value={values.thirdParty}
               error={errors.thirdParty}
@@ -310,28 +313,28 @@ export function ProjectForm({
               autoFocus
               placeholder="e.g. ChannelLink"
             />
-            <FormField
+            <TextField
               label="Fulfilment supplier"
               value={values.supplier}
               error={errors.supplier}
               onChange={(value) => updateValue("supplier", value)}
               placeholder="e.g. Openreach"
             />
-            <FormField
+            <TextField
               label="CRF reference"
               value={values.crfReference}
               error={errors.crfReference}
               onChange={(value) => updateValue("crfReference", value)}
               placeholder="CRF-260727-001"
             />
-            <FormField
+            <TextField
               label="Third-party order reference"
               value={values.thirdPartyReference}
               onChange={(value) => updateValue("thirdPartyReference", value)}
               optional
               placeholder="Add when the partner accepts"
             />
-            <FormField
+            <TextField
               label="Supplier portal reference"
               value={values.supplierReference}
               onChange={(value) => updateValue("supplierReference", value)}
@@ -357,74 +360,40 @@ export function ProjectForm({
           </legend>
           <p>Set the people and dates that will drive proactive order management.</p>
           <div className="form-grid">
-            <FormField
+            <TextField
               label="MSP order owner"
               value={values.owner}
               error={errors.owner}
               onChange={(value) => updateValue("owner", value)}
               autoFocus
             />
-            <FormField
+            <TextField
               label="Sales owner"
               value={values.salesOwner}
               error={errors.salesOwner}
               onChange={(value) => updateValue("salesOwner", value)}
             />
-            <label className="form-field">
-              <span>
-                Priority <em aria-hidden="true">*</em>
-              </span>
-              <select
-                value={values.priority}
-                onChange={(event) =>
-                  updateValue(
-                    "priority",
-                    event.target.value as ProjectDraft["priority"],
-                  )
-                }
-              >
-                {projectPriorities.map((priority) => (
-                  <option key={priority}>{priority}</option>
-                ))}
-              </select>
-            </label>
-            <label className="form-field">
-              <span>
-                Target live date <em aria-hidden="true">*</em>
-              </span>
-              <input
-                type="date"
-                value={values.dueDate}
-                onChange={(event) => updateValue("dueDate", event.target.value)}
-                aria-invalid={Boolean(errors.dueDate)}
-                aria-describedby={describedBy("dueDate")}
-              />
-              {errors.dueDate && (
-                <small id={describedBy("dueDate")}>{errors.dueDate}</small>
-              )}
-            </label>
-            <label className="form-field">
-              <span>
-                Monthly contract value (£) <em aria-hidden="true">*</em>
-              </span>
-              <input
-                type="number"
-                min="0"
-                step="100"
-                value={values.monthlyValue}
-                onChange={(event) =>
-                  updateValue("monthlyValue", event.target.value)
-                }
-                aria-invalid={Boolean(errors.monthlyValue)}
-                aria-describedby={describedBy("monthlyValue")}
-                placeholder="e.g. 12500"
-              />
-              {errors.monthlyValue && (
-                <small id={describedBy("monthlyValue")}>
-                  {errors.monthlyValue}
-                </small>
-              )}
-            </label>
+            <SelectField
+              label="Priority"
+              value={values.priority}
+              options={projectPriorities}
+              onChange={(value) => updateValue("priority", value)}
+            />
+            <DateField
+              label="Target live date"
+              value={values.dueDate}
+              error={errors.dueDate}
+              onChange={(value) => updateValue("dueDate", value)}
+            />
+            <NumberField
+              label="Monthly contract value (£)"
+              min={0}
+              step={100}
+              value={values.monthlyValue}
+              error={errors.monthlyValue}
+              onChange={(value) => updateValue("monthlyValue", value)}
+              placeholder="e.g. 12500"
+            />
             <div className="tracker-created-note">
               <span aria-hidden="true">✓</span>
               <div>
@@ -471,48 +440,5 @@ export function ProjectForm({
         </button>
       </div>
     </form>
-  );
-}
-
-interface FormFieldProps {
-  label: string;
-  value: string;
-  error?: string;
-  placeholder?: string;
-  optional?: boolean;
-  autoFocus?: boolean;
-  onChange: (value: string) => void;
-}
-
-function FormField({
-  label,
-  value,
-  error,
-  placeholder,
-  optional,
-  autoFocus,
-  onChange,
-}: FormFieldProps) {
-  const errorId = `${label.toLowerCase().replaceAll(/[^a-z]+/g, "-")}-error`;
-  return (
-    <label className="form-field">
-      <span>
-        {label}{" "}
-        {optional ? (
-          <small className="optional-label">Optional</small>
-        ) : (
-          <em aria-hidden="true">*</em>
-        )}
-      </span>
-      <input
-        autoFocus={autoFocus}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        aria-invalid={Boolean(error)}
-        aria-describedby={error ? errorId : undefined}
-        placeholder={placeholder}
-      />
-      {error && <small id={errorId}>{error}</small>}
-    </label>
   );
 }

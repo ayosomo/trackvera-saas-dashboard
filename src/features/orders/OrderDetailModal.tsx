@@ -1,12 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
-import { createPortal } from "react-dom";
+import { useState, type FormEvent } from "react";
 import { formatDate } from "../../lib/formatters";
 import {
   blockerTypes,
   type BlockerType,
   type OrderBlocker,
   type Project,
-} from "../../types";
+} from "../../domain/project";
 import { StatusBadge } from "../../components/StatusBadge";
 import {
   blockerPlaybooks,
@@ -16,8 +15,8 @@ import {
   orderJourney,
 } from "./orderJourney";
 
-interface OrderDetailModalProps {
-  project: Project | null;
+interface OrderDetailViewProps {
+  project: Project;
   isUpdating: boolean;
   onClose: () => void;
   onEdit: (project: Project) => void;
@@ -26,7 +25,7 @@ interface OrderDetailModalProps {
   onResolveBlocker: (project: Project, blockerId: string) => void;
 }
 
-export function OrderDetailModal({
+export function OrderDetailView({
   project,
   isUpdating,
   onClose,
@@ -34,24 +33,11 @@ export function OrderDetailModal({
   onAdvance,
   onAddBlocker,
   onResolveBlocker,
-}: OrderDetailModalProps) {
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
+}: OrderDetailViewProps) {
   const [showIssueForm, setShowIssueForm] = useState(false);
   const [blockerType, setBlockerType] = useState<BlockerType>("ECC");
   const [summary, setSummary] = useState("");
   const [targetDate, setTargetDate] = useState("");
-
-  useEffect(() => {
-    if (!project) return;
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.setTimeout(() => closeButtonRef.current?.focus(), 0);
-    return () => {
-      document.body.style.overflow = overflow;
-    };
-  }, [project]);
-
-  if (!project) return null;
 
   const currentStage = getStage(project.currentStage);
   const currentStageIndex = getStageIndex(project.currentStage);
@@ -66,7 +52,7 @@ export function OrderDetailModal({
     if (!summary.trim() || !targetDate) return;
     const playbook = blockerPlaybooks[blockerType];
 
-    onAddBlocker(project!, {
+    onAddBlocker(project, {
       id: `blocker-${Date.now()}`,
       type: blockerType,
       summary: summary.trim(),
@@ -81,21 +67,11 @@ export function OrderDetailModal({
     setShowIssueForm(false);
   }
 
-  return createPortal(
-    <div
-      className="modal-backdrop tracker-backdrop"
-      onMouseDown={(event) => {
-        if (event.currentTarget === event.target && !isUpdating) onClose();
-      }}
-    >
+  return (
+    <div className="project-detail-page">
       <section
-        className="tracker-modal"
-        role="dialog"
-        aria-modal="true"
+        className="tracker-modal tracker-page"
         aria-labelledby="tracker-title"
-        onKeyDown={(event) => {
-          if (event.key === "Escape" && !isUpdating) onClose();
-        }}
       >
         <header className="tracker-header">
           <div>
@@ -118,14 +94,12 @@ export function OrderDetailModal({
               Edit details
             </button>
             <button
-              ref={closeButtonRef}
               type="button"
-              className="modal__close"
+              className="button button--secondary button--small"
               onClick={onClose}
               disabled={isUpdating}
-              aria-label="Close order tracker"
             >
-              ×
+              ← Back to orders
             </button>
           </div>
         </header>
@@ -365,7 +339,6 @@ export function OrderDetailModal({
           </aside>
         </div>
       </section>
-    </div>,
-    document.body,
+    </div>
   );
 }

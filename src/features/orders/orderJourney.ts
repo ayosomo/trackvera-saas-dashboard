@@ -3,7 +3,7 @@ import type {
   OrderParty,
   OrderStageId,
   Project,
-} from "../../types";
+} from "../../domain/project";
 
 export interface JourneyStage {
   id: OrderStageId;

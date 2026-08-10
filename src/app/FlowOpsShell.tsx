@@ -1,0 +1,491 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { Link, Outlet, useLocation } from "react-router-dom";
+import { createProject, getProjects, updateProject } from "../api/projects";
+import {
+  NotificationCentre,
+  type OrderNotification,
+} from "../features/orders/NotificationCentre";
+import {
+  advanceOrder,
+  getNextStage,
+  getStage,
+} from "../features/orders/orderJourney";
+import { ProjectModal } from "../features/projects/ProjectModal";
+import type {
+  OrderBlocker,
+  Project,
+  ProjectDraft,
+} from "../domain/project";
+import {
+  FlowOpsContext,
+  type FlowOpsContextValue,
+  type FlowOpsFeedback,
+} from "./FlowOpsContext";
+
+const projectsQueryKey = ["projects"] as const;
+
+interface MutationContext {
+  previousProjects: Project[];
+  optimisticId?: string;
+}
+
+interface UpdateVariables {
+  project: Project;
+  notification: {
+    title: string;
+    detail: string;
+  };
+  successMessage?: string;
+  errorMessage?: string;
+  closeEditorOnSuccess?: boolean;
+}
+
+const initialNotifications: OrderNotification[] = [
+  {
+    id: "notification-1",
+    owner: "Rowan Bell",
+    title: "Milestone reached · Activation",
+    detail: "Fieldwork Energy moved into activation and service testing.",
+    timestamp: "Today, 08:30",
+    unread: true,
+  },
+  {
+    id: "notification-2",
+    owner: "Theo Grant",
+    title: "Exception assigned · ECC",
+    detail:
+      "Veridian Bank requires customer approval for £8,400 construction charges.",
+    timestamp: "Today, 09:15",
+    unread: true,
+  },
+  {
+    id: "notification-3",
+    owner: "Maya Chen",
+    title: "Milestone reached · Handover",
+    detail: "CivicWorks completed service handover and moved into support.",
+    timestamp: "18 Jul, 17:00",
+    unread: false,
+  },
+];
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error
+    ? error.message
+    : "Something went wrong. Please try again.";
+}
+
+export function FlowOpsShell() {
+  const queryClient = useQueryClient();
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] =
+    useState<OrderNotification[]>(initialNotifications);
+  const [feedback, setFeedback] = useState<FlowOpsFeedback | null>(null);
+
+  const projectsQuery = useQuery({
+    queryKey: projectsQueryKey,
+    queryFn: ({ signal }) => getProjects({ signal }),
+  });
+
+  const projects = useMemo(
+    () => projectsQuery.data ?? [],
+    [projectsQuery.data],
+  );
+  const editingProject =
+    projects.find((project) => project.id === editingProjectId) ?? null;
+
+  function addNotification(owner: string, title: string, detail: string) {
+    setNotifications((current) => [
+      {
+        id: `notification-${Date.now()}`,
+        owner,
+        title,
+        detail,
+        timestamp: "Just now",
+        unread: true,
+      },
+      ...current,
+    ]);
+  }
+
+  function restoreTriggerFocus() {
+    window.setTimeout(() => returnFocusRef.current?.focus(), 0);
+  }
+
+  const createMutation = useMutation<
+    Project,
+    Error,
+    ProjectDraft,
+    MutationContext
+  >({
+    mutationFn: createProject,
+    onMutate: async (draft) => {
+      await queryClient.cancelQueries({ queryKey: projectsQueryKey });
+      const previousProjects =
+        queryClient.getQueryData<Project[]>(projectsQueryKey) ?? [];
+      const optimisticId = `optimistic-${Date.now()}`;
+
+      queryClient.setQueryData<Project[]>(projectsQueryKey, [
+        {
+          ...draft,
+          id: optimisticId,
+          updatedAt: new Date().toISOString(),
+        },
+        ...previousProjects,
+      ]);
+      return { previousProjects, optimisticId };
+    },
+    onError: (_error, _draft, context) => {
+      if (context) {
+        queryClient.setQueryData(projectsQueryKey, context.previousProjects);
+      }
+      setFeedback({
+        kind: "error",
+        message:
+          "The order tracker was not saved. Your existing portfolio is unchanged.",
+      });
+    },
+    onSuccess: (createdProject, _draft, context) => {
+      queryClient.setQueryData<Project[]>(projectsQueryKey, (current = []) =>
+        current.map((project) =>
+          project.id === context?.optimisticId ? createdProject : project,
+        ),
+      );
+      addNotification(
+        createdProject.owner,
+        "New order tracker assigned",
+        `${createdProject.customer} was created at ${getStage(createdProject.currentStage).label}.`,
+      );
+      setFeedback({
+        kind: "success",
+        message: `${createdProject.customer} tracker is ready and ${createdProject.owner} was notified.`,
+      });
+      setIsCreateModalOpen(false);
+      restoreTriggerFocus();
+    },
+  });
+
+  const updateMutation = useMutation<
+    Project,
+    Error,
+    UpdateVariables,
+    MutationContext
+  >({
+    mutationFn: ({ project }) => updateProject(project),
+    onMutate: async ({ project }) => {
+      await queryClient.cancelQueries({ queryKey: projectsQueryKey });
+      const previousProjects =
+        queryClient.getQueryData<Project[]>(projectsQueryKey) ?? [];
+      queryClient.setQueryData<Project[]>(projectsQueryKey, (current = []) =>
+        current.map((item) => (item.id === project.id ? project : item)),
+      );
+      return { previousProjects };
+    },
+    onError: (_error, variables, context) => {
+      if (context) {
+        queryClient.setQueryData(projectsQueryKey, context.previousProjects);
+      }
+      setFeedback({
+        kind: "error",
+        message:
+          variables.errorMessage ??
+          "The order update failed and has been rolled back.",
+      });
+    },
+    onSuccess: (savedProject, variables) => {
+      queryClient.setQueryData<Project[]>(projectsQueryKey, (current = []) =>
+        current.map((item) =>
+          item.id === savedProject.id ? savedProject : item,
+        ),
+      );
+      addNotification(
+        savedProject.owner,
+        variables.notification.title,
+        variables.notification.detail,
+      );
+      setFeedback({
+        kind: "success",
+        message:
+          variables.successMessage ??
+          `${savedProject.owner} was notified of the order update.`,
+      });
+      if (variables.closeEditorOnSuccess) setEditingProjectId(null);
+    },
+  });
+
+  function closeProjectModal() {
+    if (editingProjectId) {
+      setEditingProjectId(null);
+      return;
+    }
+
+    setIsCreateModalOpen(false);
+    restoreTriggerFocus();
+  }
+
+  function submitProjectEdit(draft: ProjectDraft) {
+    if (!editingProject) return;
+
+    setFeedback(null);
+    updateMutation.mutate({
+      project: { ...editingProject, ...draft },
+      notification: {
+        title: "Project details updated",
+        detail: `${draft.customer} commercial and delivery details were updated.`,
+      },
+      successMessage: `${draft.customer} was updated successfully.`,
+      errorMessage: "The project changes failed and have been rolled back.",
+      closeEditorOnSuccess: true,
+    });
+  }
+
+  function advanceMilestone(project: Project) {
+    const nextStage = getNextStage(project.currentStage);
+    if (!nextStage) return;
+
+    updateMutation.mutate({
+      project: advanceOrder(project),
+      notification: {
+        title: `Milestone reached · ${nextStage.shortLabel}`,
+        detail: `${project.customer} moved to ${nextStage.label}. ${nextStage.nextAction}`,
+      },
+    });
+  }
+
+  function addBlocker(project: Project, blocker: OrderBlocker) {
+    updateMutation.mutate({
+      project: {
+        ...project,
+        blockers: [blocker, ...project.blockers],
+        openRisks: project.openRisks + 1,
+        status: ["ECC", "Wayleave", "Survey failure", "Network capacity"].includes(
+          blocker.type,
+        )
+          ? "Blocked"
+          : "At risk",
+      },
+      notification: {
+        title: `Exception assigned · ${blocker.type}`,
+        detail: `${blocker.accountableParty} is accountable. ${blocker.nextAction}`,
+      },
+    });
+  }
+
+  function resolveBlocker(project: Project, blockerId: string) {
+    const blockers = project.blockers.map((blocker) =>
+      blocker.id === blockerId
+        ? ({ ...blocker, status: "Resolved" } as const)
+        : blocker,
+    );
+    const remaining = blockers.filter(
+      (blocker) => blocker.status === "Open",
+    ).length;
+    const resolved = project.blockers.find(
+      (blocker) => blocker.id === blockerId,
+    );
+
+    updateMutation.mutate({
+      project: {
+        ...project,
+        blockers,
+        openRisks: remaining,
+        status: remaining === 0 ? "On track" : project.status,
+      },
+      notification: {
+        title: `Exception resolved · ${resolved?.type ?? "Order issue"}`,
+        detail: `${project.customer} can continue through ${getStage(project.currentStage).label}.`,
+      },
+    });
+  }
+
+  const openExceptions = projects.reduce(
+    (total, project) =>
+      total +
+      project.blockers.filter((blocker) => blocker.status === "Open").length,
+    0,
+  );
+  const unreadNotificationCount = notifications.filter(
+    (item) => item.unread,
+  ).length;
+
+  const contextValue: FlowOpsContextValue = {
+    projects,
+    isLoading: projectsQuery.isLoading,
+    isLoadError: projectsQuery.isError,
+    loadError: projectsQuery.error,
+    refetchProjects: () => void projectsQuery.refetch(),
+    feedback,
+    dismissFeedback: () => setFeedback(null),
+    openNewProject: (returnFocusTo) => {
+      returnFocusRef.current = returnFocusTo ?? null;
+      createMutation.reset();
+      setFeedback(null);
+      setIsCreateModalOpen(true);
+    },
+    openProjectEditor: (project) => {
+      updateMutation.reset();
+      setFeedback(null);
+      setEditingProjectId(project.id);
+    },
+    openNotifications: () => setIsNotificationsOpen(true),
+    unreadNotificationCount,
+    isUpdating: updateMutation.isPending,
+    advanceMilestone,
+    addBlocker,
+    resolveBlocker,
+  };
+
+  return (
+    <FlowOpsContext.Provider value={contextValue}>
+      <div className="app-shell">
+        <a className="skip-link" href="#main-content">
+          Skip to main content
+        </a>
+        <Sidebar
+          projectCount={projects.length}
+          openExceptionCount={openExceptions}
+        />
+        <main id="main-content" tabIndex={-1}>
+          <Outlet />
+        </main>
+
+        <ProjectModal
+          isOpen={isCreateModalOpen || editingProjectId !== null}
+          mode={editingProjectId ? "edit" : "create"}
+          project={editingProject ?? undefined}
+          isSubmitting={
+            editingProjectId
+              ? updateMutation.isPending
+              : createMutation.isPending
+          }
+          submitError={
+            editingProjectId
+              ? updateMutation.isError
+                ? getErrorMessage(updateMutation.error)
+                : null
+              : createMutation.isError
+                ? getErrorMessage(createMutation.error)
+                : null
+          }
+          onClose={closeProjectModal}
+          onSubmit={
+            editingProjectId
+              ? submitProjectEdit
+              : (draft) => {
+                  setFeedback(null);
+                  createMutation.mutate(draft);
+                }
+          }
+        />
+
+        <NotificationCentre
+          isOpen={isNotificationsOpen}
+          notifications={notifications}
+          onClose={() => setIsNotificationsOpen(false)}
+          onMarkAllRead={() =>
+            setNotifications((items) =>
+              items.map((item) => ({ ...item, unread: false })),
+            )
+          }
+        />
+      </div>
+    </FlowOpsContext.Provider>
+  );
+}
+
+interface SidebarProps {
+  projectCount: number;
+  openExceptionCount: number;
+}
+
+function Sidebar({ projectCount, openExceptionCount }: SidebarProps) {
+  const location = useLocation();
+  const isProjectDetail = /^\/projects\/[^/]+$/.test(location.pathname);
+  const isExceptionView = new URLSearchParams(location.search).get("status") === "Blocked";
+
+  return (
+    <aside className="sidebar" aria-label="Primary navigation">
+      <Link className="brand" to="/projects" aria-label="FlowOps home">
+        <span className="brand__mark" aria-hidden="true">
+          F
+        </span>
+        <span>FlowOps</span>
+      </Link>
+      <p className="sidebar__workspace-label">MSP Order Control</p>
+      <nav>
+        <NavItem
+          to="/projects"
+          icon="⌂"
+          isActive={location.pathname === "/projects" && !location.search && !location.hash}
+        >
+          Control tower
+        </NavItem>
+        <NavItem
+          to="/projects?sort=updatedAt"
+          icon="▦"
+          count={projectCount}
+          isActive={isProjectDetail || (location.pathname === "/projects" && Boolean(location.search) && !isExceptionView)}
+        >
+          Orders
+        </NavItem>
+        <NavItem
+          to="/projects?status=Blocked&sort=status&direction=asc"
+          icon="△"
+          count={openExceptionCount}
+          isActive={location.pathname === "/projects" && isExceptionView}
+        >
+          Exceptions
+        </NavItem>
+        <NavItem
+          to="/projects#raci"
+          icon="◎"
+          isActive={location.pathname === "/projects" && location.hash === "#raci"}
+        >
+          RACI ownership
+        </NavItem>
+      </nav>
+      <div className="sidebar__footer">
+        <div className="team-avatar" aria-hidden="true">
+          DO
+        </div>
+        <div>
+          <strong>Delivery Ops</strong>
+          <span>Order coordination</span>
+        </div>
+        <button type="button" aria-label="Workspace options">
+          ···
+        </button>
+      </div>
+    </aside>
+  );
+}
+
+interface NavItemProps {
+  to: string;
+  icon: string;
+  count?: number;
+  isActive: boolean;
+  children: ReactNode;
+}
+
+function NavItem({ to, icon, count, isActive, children }: NavItemProps) {
+  return (
+    <Link
+      className={isActive ? "nav-link nav-link--active" : "nav-link"}
+      to={to}
+      aria-current={isActive ? "page" : undefined}
+    >
+      <span aria-hidden="true">{icon}</span>
+      {children}
+      {count !== undefined && <span className="nav-link__count">{count}</span>}
+    </Link>
+  );
+}

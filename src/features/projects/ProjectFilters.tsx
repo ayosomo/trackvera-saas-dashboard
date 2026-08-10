@@ -1,9 +1,12 @@
-import { projectStatuses, type ProjectFilters } from "../../types";
+import {
+  projectStatuses,
+  type ProjectListState,
+} from "../../domain/project";
 
 interface ProjectFiltersProps {
-  filters: ProjectFilters;
+  filters: ProjectListState;
   resultCount: number;
-  onChange: (filters: ProjectFilters) => void;
+  onChange: (filters: ProjectListState) => void;
 }
 
 export function ProjectFilters({
@@ -23,7 +26,7 @@ export function ProjectFilters({
           placeholder="Search customer, reference, supplier or owner…"
           value={filters.search}
           onChange={(event) =>
-            onChange({ ...filters, search: event.target.value })
+            onChange({ ...filters, search: event.target.value, page: 1 })
           }
         />
       </label>
@@ -35,7 +38,8 @@ export function ProjectFilters({
           onChange={(event) =>
             onChange({
               ...filters,
-              status: event.target.value as ProjectFilters["status"],
+              status: event.target.value as ProjectListState["status"],
+              page: 1,
             })
           }
         >
@@ -45,6 +49,41 @@ export function ProjectFilters({
           ))}
         </select>
       </label>
+
+      <label className="sort-filter">
+        <span className="sr-only">Sort orders by</span>
+        <select
+          value={filters.sort}
+          onChange={(event) =>
+            onChange({
+              ...filters,
+              sort: event.target.value as ProjectListState["sort"],
+              page: 1,
+            })
+          }
+        >
+          <option value="updatedAt">Recently updated</option>
+          <option value="customer">Customer</option>
+          <option value="dueDate">Target live date</option>
+          <option value="monthlyValue">Monthly value</option>
+          <option value="status">Delivery health</option>
+        </select>
+      </label>
+
+      <button
+        className="sort-direction"
+        type="button"
+        onClick={() =>
+          onChange({
+            ...filters,
+            direction: filters.direction === "asc" ? "desc" : "asc",
+            page: 1,
+          })
+        }
+        aria-label={`Sort ${filters.direction === "asc" ? "descending" : "ascending"}`}
+      >
+        {filters.direction === "asc" ? "↑" : "↓"}
+      </button>
 
       <p className="project-filters__count" aria-live="polite">
         {resultCount} {resultCount === 1 ? "order" : "orders"}

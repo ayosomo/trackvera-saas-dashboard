@@ -5,7 +5,7 @@ import {
   orderJourney,
 } from "../orders/orderJourney";
 import { formatDate } from "../../lib/formatters";
-import type { Project } from "../../types";
+import type { Project } from "../../domain/project";
 
 interface ProjectTableProps {
   projects: Project[];

@@ -1,13 +1,10 @@
-import type { Project, ProjectDraft } from "../types";
+import { environment } from "../config/environment";
+import type { Project, ProjectDraft } from "../domain/project";
 
 const STORAGE_KEY = "flowops-created-projects";
 
 interface GetProjectsOptions {
   signal?: AbortSignal;
-}
-
-function getApiBaseUrl(): string {
-  return (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") ?? "";
 }
 
 async function readJson<T>(response: Response): Promise<T> {
@@ -46,7 +43,7 @@ function createId(): string {
 export async function getProjects(
   options: GetProjectsOptions = {},
 ): Promise<Project[]> {
-  const apiBaseUrl = getApiBaseUrl();
+  const apiBaseUrl = environment.apiBaseUrl;
   const endpoint = apiBaseUrl ? `${apiBaseUrl}/projects` : "/projects.json";
   const response = await fetch(endpoint, {
     headers: { Accept: "application/json" },
@@ -65,7 +62,7 @@ export async function getProjects(
 }
 
 export async function createProject(draft: ProjectDraft): Promise<Project> {
-  const apiBaseUrl = getApiBaseUrl();
+  const apiBaseUrl = environment.apiBaseUrl;
 
   if (apiBaseUrl) {
     const response = await fetch(`${apiBaseUrl}/projects`, {
@@ -92,7 +89,7 @@ export async function createProject(draft: ProjectDraft): Promise<Project> {
 }
 
 export async function updateProject(project: Project): Promise<Project> {
-  const apiBaseUrl = getApiBaseUrl();
+  const apiBaseUrl = environment.apiBaseUrl;
 
   if (apiBaseUrl) {
     const response = await fetch(`${apiBaseUrl}/projects/${project.id}`, {

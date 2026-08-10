@@ -1,15 +1,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createProject,
   getProjects,
   updateProject,
 } from "./api/projects";
-import { App } from "./App";
+import { AppRoutes } from "./app/AppRoutes";
 import { sampleProjects } from "./test/fixtures";
-import type { Project } from "./types";
+import type { Project } from "./domain/project";
 
 vi.mock("./api/projects", () => ({
   getProjects: vi.fn(),
@@ -21,18 +22,30 @@ const getProjectsMock = vi.mocked(getProjects);
 const createProjectMock = vi.mocked(createProject);
 const updateProjectMock = vi.mocked(updateProject);
 
-function renderApp() {
+function renderApp(initialEntry = "/projects") {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
       mutations: { retry: false },
     },
   });
-  return render(
+  let currentLocation = initialEntry;
+
+  function LocationObserver() {
+    const location = useLocation();
+    currentLocation = `${location.pathname}${location.search}`;
+    return null;
+  }
+
+  const view = render(
     <QueryClientProvider client={queryClient}>
-      <App />
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <AppRoutes />
+        <LocationObserver />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
+  return { ...view, getLocation: () => currentLocation };
 }
 
 async function openOrderModal() {
@@ -224,7 +237,7 @@ describe("MSP order orchestration", () => {
       await screen.findByText("Veridian Group was updated successfully."),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("dialog", { name: "Veridian Group" }),
+      screen.getByRole("heading", { name: "Veridian Group" }),
     ).toBeInTheDocument();
   });
 
@@ -245,15 +258,15 @@ describe("MSP order orchestration", () => {
       await screen.findByText("Project changes not saved."),
     ).toBeInTheDocument();
     expect(screen.getByText("Update unavailable")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /back/i }));
-    await user.click(screen.getByRole("button", { name: /back/i }));
+    await user.click(screen.getByRole("button", { name: "← Back" }));
+    await user.click(screen.getByRole("button", { name: "← Back" }));
     expect(screen.getByLabelText(/^customer/i)).toHaveValue("Veridian Group");
 
     await user.click(
       screen.getByRole("button", { name: "Close project editor" }),
     );
     expect(
-      await screen.findByRole("dialog", { name: "Veridian Bank" }),
+      await screen.findByRole("heading", { name: "Veridian Bank" }),
     ).toBeInTheDocument();
   });
 
@@ -268,7 +281,7 @@ describe("MSP order orchestration", () => {
     );
 
     expect(
-      screen.getByRole("dialog", { name: "Veridian Bank" }),
+      screen.getByRole("heading", { name: "Veridian Bank" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Who owns what?")).toBeInTheDocument();
     expect(screen.getByText("Construction charges awaiting approval.")).toBeInTheDocument();
@@ -303,6 +316,42 @@ describe("MSP order orchestration", () => {
     );
     expect(
       await screen.findByText("Maya Chen was notified of the order update."),
+    ).toBeInTheDocument();
+  });
+
+  it("loads filters from the URL and writes changes back to it", async () => {
+    const { getLocation } = renderApp(
+      "/projects?q=Veridian&status=At+risk&sort=dueDate&direction=asc",
+    );
+    const user = userEvent.setup();
+
+    expect(await screen.findByRole("searchbox")).toHaveValue("Veridian");
+    expect(screen.getByLabelText("Filter by status")).toHaveValue("At risk");
+    expect(screen.getByLabelText("Sort orders by")).toHaveValue("dueDate");
+
+    await user.clear(screen.getByRole("searchbox"));
+    await user.selectOptions(screen.getByLabelText("Filter by status"), "Blocked");
+
+    await waitFor(() =>
+      expect(getLocation()).toContain("status=Blocked"),
+    );
+    expect(getLocation()).not.toContain("q=");
+  });
+
+  it("supports direct project URLs and a dedicated not-found route", async () => {
+    const { unmount } = renderApp("/projects/project-2");
+
+    expect(
+      await screen.findByRole("heading", { name: "Veridian Bank" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Who owns what?")).toBeInTheDocument();
+
+    unmount();
+    renderApp("/missing-page");
+    expect(
+      await screen.findByRole("heading", {
+        name: "That FlowOps page isn’t here",
+      }),
     ).toBeInTheDocument();
   });
 });
