@@ -13,7 +13,7 @@ supply chain without having to remember who owns a delay or what to do next.
 - [x] Responsive semantic order table
 - [x] Loading, error, and empty states
 
-## Phase 2 — Project creation and updates · Complete
+## Phase 2 — Project creation, updates, and orchestration · Complete
 
 - [x] Three-step order wizard
 - [x] Shared strongly typed form for creation and editing
@@ -28,9 +28,6 @@ supply chain without having to remember who owns a delay or what to do next.
 - [x] Success, error, and owner notifications
 - [x] Component tests for create, edit, validation, and failure behaviour
 - [x] Automatic project tracker creation
-
-## Phase 3 — MSP orchestration · Complete
-
 - [x] Eight-stage order journey
 - [x] Milestone-specific RACI
 - [x] Current accountability dashboard
@@ -41,6 +38,19 @@ supply chain without having to remember who owns a delay or what to do next.
 - [x] Issue logging and resolution
 - [x] Progress blocking while exceptions remain open
 - [x] Tests for tracker, RACI, playbooks, and notifications
+
+## Phase 3 — Application architecture · Complete
+
+- [x] React Router application shell
+- [x] Individual project detail routes
+- [x] URL-backed search and status filters
+- [x] URL-backed sorting and pagination
+- [x] Reusable text, select, date, and number form controls
+- [x] Environment configuration separated from the API adapter
+- [x] Dedicated not-found and unexpected-error pages
+- [x] Domain, API, application, route, and presentation boundaries
+- [x] Pure tests for list rules and URL state
+- [x] Component coverage for direct routes and filter persistence
 
 ## Phase 4 — Production backend · Planned
 

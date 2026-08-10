@@ -126,9 +126,12 @@ workflow platform using an outbox/event integration.
 - Active monthly recurring value
 - Current accountability split across MSP, external supply chain, and customer
 - Search across customers, products, sites, owners, suppliers, and references
-- Status filtering
+- URL-backed search and status filters that can be bookmarked or shared
+- Sorting by update time, customer, target date, value, or delivery health
+- Paginated portfolio views
+- Route-backed project detail pages
 - Semantic desktop table transforming into labelled mobile cards
-- Loading, empty, and API error states
+- Loading, empty, not-found, and unexpected-error states
 
 ## Run locally
 
@@ -149,7 +152,8 @@ npm run build
 
 ## Data modes
 
-All network and persistence logic lives in `src/api/projects.ts`.
+Runtime configuration is normalised in `src/config/environment.ts`. Network and
+persistence logic remains inside `src/api/projects.ts`.
 
 ### Demo mode
 
@@ -179,12 +183,23 @@ introduced without changing the UI components.
 
 ```text
 src/
+├── app/
+│   ├── AppRoutes.tsx
+│   ├── FlowOpsContext.ts
+│   ├── FlowOpsShell.tsx
+│   └── router.ts
 ├── api/
 │   └── projects.ts
 ├── components/
 │   ├── FeedbackMessage.tsx
 │   ├── StatusBadge.tsx
-│   └── SummaryCard.tsx
+│   ├── SummaryCard.tsx
+│   └── form/
+│       └── FormControls.tsx
+├── config/
+│   └── environment.ts
+├── domain/
+│   └── project.ts
 ├── features/
 │   ├── dashboard/
 │   │   └── summary.ts
@@ -196,21 +211,30 @@ src/
 │       ├── ProjectFilters.tsx
 │       ├── ProjectForm.tsx
 │       ├── ProjectModal.tsx
+│       ├── ProjectPagination.tsx
+│       ├── projectListState.ts
 │       └── ProjectTable.tsx
 ├── lib/
 │   └── formatters.ts
+├── pages/
+│   ├── NotFoundPage.tsx
+│   ├── ProjectDetailPage.tsx
+│   ├── ProjectsPage.tsx
+│   └── UnexpectedErrorPage.tsx
 ├── App.tsx
 ├── main.tsx
-├── styles.css
-└── types.ts
+└── styles.css
 ```
 
 ### State ownership
 
 - TanStack Query owns order data, caching, optimistic updates, and rollback.
-- React owns filters, open panels, selected order, and in-app notifications.
+- React Router owns navigation, individual project URLs, and shareable list
+  state.
+- React owns open panels, form state, and in-app notifications.
 - The three-step form owns its strongly typed values and validation.
-- Pure journey functions own stage definitions, RACI, progress, and playbooks.
+- Pure domain functions own filtering, sorting, pagination, journey stages,
+  RACI, progress, and playbooks.
 
 Redux is intentionally omitted because the complex state is remote state,
 which TanStack Query already handles.
@@ -235,6 +259,12 @@ which TanStack Query already handles.
 - **In-app notification events:** milestone and exception events demonstrate
   the workflow. Email, Teams, Slack, or service-desk delivery remains a roadmap
   integration that requires a backend.
+- **Browser routes with URL-backed list state:** project pages are directly
+  addressable and portfolio views can be shared. Search parameters remain
+  presentation state and are not pushed into the API contract prematurely.
+- **Five-row client-side pagination:** this is appropriate for the current demo
+  dataset. A production API can move filtering, sorting, and pagination to the
+  server without changing the page or domain contracts.
 
 ## Accessibility
 
@@ -252,11 +282,13 @@ Vitest and React Testing Library cover:
 
 - Portfolio summary rules
 - Search and status filters
+- URL parsing, filter persistence, sorting, and pagination rules
 - Accessible order table rendering
 - Wizard opening, closing, validation, success, and rollback
 - Project editing, preserved workflow state, optimistic success, and rollback
 - Correct tracker stage from supplied references
 - RACI and exception-playbook visibility
 - Milestone advancement and owner notifications
+- Direct project routes and not-found navigation
 
 See [PROJECT_PLAN.md](./PROJECT_PLAN.md) for the next delivery phases.
