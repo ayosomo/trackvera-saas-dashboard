@@ -54,6 +54,7 @@ export function TextField({
       {(describedBy) => (
         <input
           autoFocus={autoFocus}
+          required={!optional}
           value={value}
           onChange={(event) => onChange(event.target.value)}
           aria-invalid={Boolean(error)}
@@ -83,6 +84,7 @@ export function DateField(props: DateFieldProps) {
       {(describedBy) => (
         <input
           type="date"
+          required={!props.optional}
           value={props.value}
           onChange={(event) => props.onChange(event.target.value)}
           aria-invalid={Boolean(props.error)}
@@ -109,6 +111,7 @@ export function NumberField(props: NumberFieldProps) {
       {(describedBy) => (
         <input
           type="number"
+          required
           min={props.min}
           step={props.step}
           value={props.value}
@@ -139,6 +142,7 @@ export function SelectField<Option extends string>({
     <FieldFrame label={label}>
       {() => (
         <select
+          required
           value={value}
           onChange={(event) => onChange(event.target.value as Option)}
         >

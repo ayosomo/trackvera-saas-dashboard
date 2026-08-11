@@ -149,6 +149,7 @@ pnpm run test
 pnpm run lint
 pnpm run build
 pnpm run test:e2e
+pnpm run test:a11y
 ```
 
 Install Playwright's managed Chromium browser once before the first E2E run:
@@ -282,6 +283,10 @@ which TanStack Query already handles.
 - Status announcements for successful and failed updates
 - Plain-language accountability and exception instructions
 - Reduced-motion support
+- Required-field semantics and linked validation errors
+- Focus trapping and trigger restoration for both modal surfaces
+- Route-change focus management for project and recovery navigation
+- Automated axe scans against meaningful production-build states
 
 ## Test coverage
 
@@ -298,7 +303,7 @@ Vitest and React Testing Library cover:
 - Milestone advancement and owner notifications
 - Direct project routes and not-found navigation
 
-Playwright covers eight critical journeys through the compiled production
+Playwright covers thirteen critical journeys through the compiled production
 bundle:
 
 - Loading, searching, filtering, sorting, and paginating the order portfolio
@@ -310,6 +315,14 @@ bundle:
 - Recovering from missing projects and unknown routes
 - Using skip navigation, the creation modal, validation, Escape dismissal, and
   focus restoration with the keyboard
+
+Five of those scenarios run axe against distinct application states:
+
+- The loaded dashboard and portfolio controls
+- The new-order dialog and field-validation errors
+- The notification dialog and focus containment
+- Project-detail routing and heading structure
+- Service-error and not-found recovery states
 
 `pnpm run test:e2e` builds FlowOps with `VITE_API_URL=/api`, starts the Vite
 production preview on port 4180, and supplies a deterministic API fixture at

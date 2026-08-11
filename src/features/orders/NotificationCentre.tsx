@@ -1,3 +1,4 @@
+import { useRef, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 
 export interface OrderNotification {
@@ -16,13 +17,48 @@ interface NotificationCentreProps {
   onMarkAllRead: () => void;
 }
 
+const focusableSelector = [
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "[href]",
+  "[tabindex]:not([tabindex='-1'])",
+].join(",");
+
 export function NotificationCentre({
   isOpen,
   notifications,
   onClose,
   onMarkAllRead,
 }: NotificationCentreProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
   if (!isOpen) return null;
+
+  function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onClose();
+      return;
+    }
+
+    if (event.key !== "Tab") return;
+
+    const focusable = Array.from(
+      panelRef.current?.querySelectorAll<HTMLElement>(focusableSelector) ?? [],
+    );
+    const first = focusable[0];
+    const last = focusable.at(-1);
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
+  }
 
   return createPortal(
     <div
@@ -31,14 +67,13 @@ export function NotificationCentre({
         if (event.currentTarget === event.target) onClose();
       }}
     >
-      <aside
+      <div
+        ref={panelRef}
         className="notification-panel"
         role="dialog"
         aria-modal="true"
         aria-labelledby="notifications-title"
-        onKeyDown={(event) => {
-          if (event.key === "Escape") onClose();
-        }}
+        onKeyDown={handleKeyDown}
       >
         <header>
           <div>
@@ -95,7 +130,7 @@ export function NotificationCentre({
             Teams, or a service desk.
           </p>
         </footer>
-      </aside>
+      </div>
     </div>,
     document.body,
   );

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -82,13 +83,23 @@ function getErrorMessage(error: unknown): string {
 
 export function FlowOpsShell() {
   const queryClient = useQueryClient();
+  const location = useLocation();
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const notificationReturnFocusRef = useRef<HTMLElement | null>(null);
+  const previousPathnameRef = useRef(location.pathname);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] =
     useState<OrderNotification[]>(initialNotifications);
   const [feedback, setFeedback] = useState<FlowOpsFeedback | null>(null);
+
+  useEffect(() => {
+    if (previousPathnameRef.current === location.pathname) return;
+
+    previousPathnameRef.current = location.pathname;
+    window.setTimeout(() => document.getElementById("main-content")?.focus(), 0);
+  }, [location.pathname]);
 
   const projectsQuery = useQuery({
     queryKey: projectsQueryKey,
@@ -231,6 +242,11 @@ export function FlowOpsShell() {
     restoreTriggerFocus();
   }
 
+  function closeNotifications() {
+    setIsNotificationsOpen(false);
+    window.setTimeout(() => notificationReturnFocusRef.current?.focus(), 0);
+  }
+
   function submitProjectEdit(draft: ProjectDraft) {
     if (!editingProject) return;
 
@@ -335,7 +351,14 @@ export function FlowOpsShell() {
       setFeedback(null);
       setEditingProjectId(project.id);
     },
-    openNotifications: () => setIsNotificationsOpen(true),
+    openNotifications: (returnFocusTo) => {
+      notificationReturnFocusRef.current =
+        returnFocusTo ??
+        (document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null);
+      setIsNotificationsOpen(true);
+    },
     unreadNotificationCount,
     isUpdating: updateMutation.isPending,
     advanceMilestone,
@@ -389,7 +412,7 @@ export function FlowOpsShell() {
         <NotificationCentre
           isOpen={isNotificationsOpen}
           notifications={notifications}
-          onClose={() => setIsNotificationsOpen(false)}
+          onClose={closeNotifications}
           onMarkAllRead={() =>
             setNotifications((items) =>
               items.map((item) => ({ ...item, unread: false })),

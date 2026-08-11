@@ -43,6 +43,7 @@ export function ProjectsPage() {
     unreadNotificationCount,
   } = useFlowOps();
   const newProjectButtonRef = useRef<HTMLButtonElement>(null);
+  const notificationButtonRef = useRef<HTMLButtonElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -109,9 +110,10 @@ export function ProjectsPage() {
         </div>
         <div className="header-actions">
           <button
+            ref={notificationButtonRef}
             type="button"
             className="notification-button"
-            onClick={openNotifications}
+            onClick={() => openNotifications(notificationButtonRef.current)}
             aria-label={`Open notifications, ${unreadNotificationCount} unread`}
           >
             <span aria-hidden="true">♢</span>

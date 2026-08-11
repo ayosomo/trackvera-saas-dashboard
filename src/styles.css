@@ -469,7 +469,7 @@ main {
 
 .summary-card__detail {
   margin-top: 3px !important;
-  color: #89938f;
+  color: var(--muted);
   font-size: 11px;
 }
 
@@ -593,7 +593,7 @@ main {
 
 .project-filters__count {
   margin: 0;
-  color: #84908b;
+  color: var(--muted);
   font-size: 11px;
   text-align: right;
 }
@@ -606,7 +606,7 @@ main {
   padding: 17px 25px;
   border-top: 1px solid #e7ece9;
   background: #fafcfb;
-  color: #718079;
+  color: #5d6a65;
   font-size: 11px;
 }
 
@@ -725,7 +725,7 @@ main {
 
 .project-table th {
   padding: 12px 16px;
-  color: #7b8782;
+  color: #596660;
   background: #f7f9f8;
   font-size: 9px;
   font-weight: 700;
@@ -1894,7 +1894,7 @@ main {
   gap: 10px;
 }
 
-.tracker-title-row h2 {
+.tracker-title-row h1 {
   margin: 0;
   font-family: "Manrope", sans-serif;
   font-size: 25px;
@@ -1941,7 +1941,7 @@ main {
 
 .tracker-meta span {
   margin-bottom: 4px;
-  color: #8a9691;
+  color: #5d6a65;
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -1985,8 +1985,8 @@ main {
   margin-bottom: 19px;
 }
 
-.section-heading h3,
-.raci-panel h3 {
+.section-heading h2,
+.raci-panel h2 {
   margin: 0;
   color: var(--ink);
   font-family: "Manrope", sans-serif;
@@ -1996,7 +1996,7 @@ main {
 .section-heading > span {
   padding: 5px 8px;
   border-radius: 20px;
-  color: #62736d;
+  color: #566761;
   background: #edf2ef;
   font-size: 8px;
   font-weight: 700;
@@ -2041,7 +2041,7 @@ main {
   place-items: center;
   border: 2px solid #dce5e0;
   border-radius: 50%;
-  color: #96a09c;
+  color: #5d6a65;
   background: white;
   font-size: 9px;
   font-weight: 800;
@@ -2050,7 +2050,7 @@ main {
 .journey-step--complete .journey-step__marker {
   border-color: #6eaf99;
   color: white;
-  background: #3b9275;
+  background: var(--green);
 }
 
 .journey-step--current .journey-step__marker {
@@ -2073,7 +2073,7 @@ main {
 }
 
 .journey-step--upcoming .journey-step__title strong {
-  color: #8c9793;
+  color: #5d6a65;
 }
 
 .journey-step__title > span {
@@ -2089,7 +2089,7 @@ main {
 
 .journey-step > div > p {
   margin: 3px 0 0;
-  color: #89948f;
+  color: #5d6a65;
   font-size: 9px;
   line-height: 1.45;
 }
@@ -2175,19 +2175,19 @@ main {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  color: #8f7d72;
+  color: #68574e;
   font-size: 8px;
 }
 
 .blocker-card__type {
   padding: 4px 7px;
   border-radius: 5px;
-  color: #a44f37;
+  color: #8f3f2b;
   background: #fbe9e2;
   font-weight: 800;
 }
 
-.blocker-card h4 {
+.blocker-card h3 {
   margin: 10px 0;
   color: #3b403e;
   font-size: 11px;
@@ -2207,7 +2207,7 @@ main {
 }
 
 .blocker-card dt {
-  color: #988b84;
+  color: #685b54;
   font-size: 7px;
   font-weight: 800;
   letter-spacing: 0.05em;
@@ -2228,7 +2228,7 @@ main {
 }
 
 .playbook-action span {
-  color: #a46523;
+  color: #85490f;
   font-size: 7px;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -2309,7 +2309,7 @@ main {
 
 .raci-panel__intro {
   margin: 6px 0 16px;
-  color: #77847f;
+  color: #5d6a65;
   font-size: 9px;
 }
 
@@ -2329,7 +2329,7 @@ main {
   display: flex;
   align-items: center;
   gap: 7px;
-  color: #89948f;
+  color: #5d6a65;
   font-size: 7px;
   font-weight: 800;
   letter-spacing: 0.05em;
@@ -2355,7 +2355,7 @@ main {
 }
 
 .raci-row--responsible dt span {
-  background: #3a9275;
+  background: var(--green);
 }
 
 .raci-row--accountable dt span {
@@ -2363,11 +2363,11 @@ main {
 }
 
 .raci-row--consulted dt span {
-  background: #b07826;
+  background: #946018;
 }
 
 .raci-row--informed dt span {
-  background: #788781;
+  background: #596762;
 }
 
 .accountability-callout {
@@ -2466,7 +2466,7 @@ main {
   justify-content: space-between;
   padding: 10px 20px;
   border-bottom: 1px solid var(--line);
-  color: #78847f;
+  color: #5d6a65;
   background: white;
   font-size: 9px;
 }
@@ -2531,7 +2531,7 @@ main {
   padding: 3px 5px;
   border-radius: 10px;
   color: white;
-  background: #3c9275;
+  background: var(--green);
   font-size: 6px;
   font-weight: 800;
   text-transform: uppercase;
@@ -2539,13 +2539,13 @@ main {
 
 .notification-item p {
   margin: 5px 0;
-  color: #6f7c77;
+  color: #5d6a65;
   font-size: 9px;
   line-height: 1.5;
 }
 
 .notification-item small {
-  color: #9aa49f;
+  color: #5d6a65;
   font-size: 8px;
 }
 
@@ -2558,7 +2558,7 @@ main {
 .notification-panel > footer p,
 .notification-empty {
   margin: 0;
-  color: #84908b;
+  color: #5d6a65;
   font-size: 8px;
   line-height: 1.5;
   text-align: center;
@@ -2578,7 +2578,7 @@ main {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #a0aaa5;
+  color: #5d6a65;
   font-size: 8px;
 }
 
@@ -2656,14 +2656,14 @@ main {
 
 .form-stage > p {
   margin: 0 0 18px;
-  color: #7e8a85;
+  color: #5d6a65;
   font-size: 9px;
 }
 
 .optional-label {
   display: inline;
   margin-left: 4px;
-  color: #99a39f !important;
+  color: #5d6a65 !important;
   font-size: 7px !important;
   font-weight: 500 !important;
 }
@@ -2887,7 +2887,7 @@ main {
     flex-direction: column;
   }
 
-  .tracker-title-row h2 {
+  .tracker-title-row h1 {
     font-size: 21px;
   }
 

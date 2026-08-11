@@ -16,7 +16,7 @@ export interface FlowOpsContextValue {
   dismissFeedback: () => void;
   openNewProject: (returnFocusTo?: HTMLElement | null) => void;
   openProjectEditor: (project: Project) => void;
-  openNotifications: () => void;
+  openNotifications: (returnFocusTo?: HTMLElement | null) => void;
   unreadNotificationCount: number;
   isUpdating: boolean;
   advanceMilestone: (project: Project) => void;

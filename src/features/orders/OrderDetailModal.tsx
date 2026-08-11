@@ -77,7 +77,7 @@ export function OrderDetailView({
           <div>
             <p className="eyebrow">Order control · {project.id}</p>
             <div className="tracker-title-row">
-              <h2 id="tracker-title">{project.customer}</h2>
+              <h1 id="tracker-title">{project.customer}</h1>
               <StatusBadge status={project.status} />
             </div>
             <p>
@@ -133,7 +133,7 @@ export function OrderDetailView({
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">End-to-end journey</p>
-                  <h3>Order milestones</h3>
+                  <h2>Order milestones</h2>
                 </div>
                 <span>
                   Stage {currentStageIndex + 1} of {orderJourney.length}
@@ -176,7 +176,7 @@ export function OrderDetailView({
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">Delay control</p>
-                  <h3>Exceptions and playbooks</h3>
+                  <h2>Exceptions and playbooks</h2>
                 </div>
                 <button
                   className="button button--secondary button--small"
@@ -245,7 +245,7 @@ export function OrderDetailView({
                         <span className="blocker-card__type">{blocker.type}</span>
                         <span>Checkpoint {formatDate(blocker.targetDate)}</span>
                       </div>
-                      <h4>{blocker.summary}</h4>
+                      <h3>{blocker.summary}</h3>
                       <dl>
                         <div>
                           <dt>Accountable</dt>
@@ -277,7 +277,7 @@ export function OrderDetailView({
 
           <aside className="raci-panel" id="raci">
             <p className="eyebrow">Current-stage RACI</p>
-            <h3>Who owns what?</h3>
+            <h2>Who owns what?</h2>
             <p className="raci-panel__intro">{currentStage.label}</p>
             <dl className="raci-list">
               <div className="raci-row raci-row--responsible">

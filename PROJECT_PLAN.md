@@ -75,12 +75,29 @@ the production bundle and can become a dependable delivery gate.
 Day 1 exit criterion: eight meaningful E2E scenarios pass automatically
 against the compiled production build.
 
-### Days 2–5 · Planned
+### Day 2 - Accessibility - Complete
 
-The remaining sprint work will cover automated delivery checks, broader
-accessibility and resilience gates, deployment evidence, and release
-documentation. Each day will be scoped before implementation so the sprint
-stays focused on production readiness rather than test-count growth.
+- [x] Add `@axe-core/playwright` to the production-build E2E suite
+- [x] Scan dashboard, form, notification, detail, service-error, and 404 states
+- [x] Attach full axe results to Playwright reports
+- [x] Fix priority-indicator ARIA semantics
+- [x] Fix text contrast failures without suppressing axe rules
+- [x] Add native required semantics to reusable form controls
+- [x] Trap notification-dialog focus and restore focus to its trigger
+- [x] Move focus to main content after route changes
+- [x] Correct project-detail heading hierarchy
+- [x] Manually verify keyboard, focus, form, error, and routing behaviour
+
+Day 2 exit criterion: five axe scenarios and the full thirteen-test E2E suite
+pass against the compiled production build, with manual keyboard and focus
+checks recorded during implementation.
+
+### Days 3-5 - Planned
+
+The remaining sprint work will cover automated delivery checks, resilience
+gates, deployment evidence, and release documentation. Each day will be scoped
+before implementation so the sprint stays focused on production readiness
+rather than test-count growth.
 
 ## Phase 5 — Production backend · Planned
 

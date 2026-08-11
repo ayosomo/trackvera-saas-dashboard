@@ -87,6 +87,7 @@ export function ProjectTable({
                   <div className="project-name">
                     <span
                       className={`priority-dot priority-dot--${project.priority.toLowerCase()}`}
+                      role="img"
                       aria-label={`${project.priority} priority`}
                     />
                     <div>
