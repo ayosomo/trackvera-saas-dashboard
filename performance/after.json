@@ -1,0 +1,100 @@
+{
+  "label": "Day 3 optimised",
+  "generatedAt": "2026-08-12T14:07:50.297Z",
+  "environment": {
+    "runs": 5,
+    "browser": "Playwright Chromium",
+    "build": "Vite production preview",
+    "api": "local deterministic fixture"
+  },
+  "bundle": [
+    {
+      "file": "index-mDLa4N80.js",
+      "bytes": 360102,
+      "gzipBytes": 113195
+    },
+    {
+      "file": "index-BX-nib5_.css",
+      "bytes": 37972,
+      "gzipBytes": 8612
+    },
+    {
+      "file": "ProjectModal-CKdVWhMv.js",
+      "bytes": 10784,
+      "gzipBytes": 3663
+    },
+    {
+      "file": "NotificationCentre-DGLYp5uw.js",
+      "bytes": 2217,
+      "gzipBytes": 997
+    }
+  ],
+  "medians": {
+    "dashboardReadyMs": 270,
+    "searchResponseMs": 23.9,
+    "detailReadyMs": 101.1,
+    "initialTransferBytes": 122407,
+    "domContentLoadedMs": 131.6,
+    "loadEventMs": 133.1,
+    "cumulativeLayoutShift": 0,
+    "longTaskCount": 0,
+    "longestTaskMs": 0
+  },
+  "samples": [
+    {
+      "dashboardReadyMs": 492.5,
+      "searchResponseMs": 52,
+      "detailReadyMs": 97.6,
+      "initialTransferBytes": 122407,
+      "domContentLoadedMs": 252.2,
+      "loadEventMs": 252.3,
+      "cumulativeLayoutShift": 0,
+      "longTaskCount": 1,
+      "longestTaskMs": 61
+    },
+    {
+      "dashboardReadyMs": 270,
+      "searchResponseMs": 20.7,
+      "detailReadyMs": 109.7,
+      "initialTransferBytes": 122407,
+      "domContentLoadedMs": 133.2,
+      "loadEventMs": 134.9,
+      "cumulativeLayoutShift": 0,
+      "longTaskCount": 0,
+      "longestTaskMs": 0
+    },
+    {
+      "dashboardReadyMs": 258.5,
+      "searchResponseMs": 21.3,
+      "detailReadyMs": 107.4,
+      "initialTransferBytes": 122407,
+      "domContentLoadedMs": 126.9,
+      "loadEventMs": 128.8,
+      "cumulativeLayoutShift": 0,
+      "longTaskCount": 0,
+      "longestTaskMs": 0
+    },
+    {
+      "dashboardReadyMs": 266.6,
+      "searchResponseMs": 29,
+      "detailReadyMs": 101.1,
+      "initialTransferBytes": 122407,
+      "domContentLoadedMs": 124.8,
+      "loadEventMs": 126.4,
+      "cumulativeLayoutShift": 0,
+      "longTaskCount": 0,
+      "longestTaskMs": 0
+    },
+    {
+      "dashboardReadyMs": 277.5,
+      "searchResponseMs": 23.9,
+      "detailReadyMs": 82.1,
+      "initialTransferBytes": 122407,
+      "domContentLoadedMs": 131.6,
+      "loadEventMs": 133.1,
+      "cumulativeLayoutShift": 0,
+      "longTaskCount": 0,
+      "longestTaskMs": 0
+    }
+  ]
+}

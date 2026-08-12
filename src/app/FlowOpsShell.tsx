@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  lazy,
+  Suspense,
   useEffect,
   useMemo,
   useRef,
@@ -8,16 +10,12 @@ import {
 } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { createProject, getProjects, updateProject } from "../api/projects";
-import {
-  NotificationCentre,
-  type OrderNotification,
-} from "../features/orders/NotificationCentre";
+import type { OrderNotification } from "../features/orders/NotificationCentre";
 import {
   advanceOrder,
   getNextStage,
   getStage,
 } from "../features/orders/orderJourney";
-import { ProjectModal } from "../features/projects/ProjectModal";
 import type {
   OrderBlocker,
   Project,
@@ -30,6 +28,16 @@ import {
 } from "./FlowOpsContext";
 
 const projectsQueryKey = ["projects"] as const;
+const NotificationCentre = lazy(() =>
+  import("../features/orders/NotificationCentre").then((module) => ({
+    default: module.NotificationCentre,
+  })),
+);
+const ProjectModal = lazy(() =>
+  import("../features/projects/ProjectModal").then((module) => ({
+    default: module.ProjectModal,
+  })),
+);
 
 interface MutationContext {
   previousProjects: Project[];
@@ -380,45 +388,53 @@ export function FlowOpsShell() {
           <Outlet />
         </main>
 
-        <ProjectModal
-          isOpen={isCreateModalOpen || editingProjectId !== null}
-          mode={editingProjectId ? "edit" : "create"}
-          project={editingProject ?? undefined}
-          isSubmitting={
-            editingProjectId
-              ? updateMutation.isPending
-              : createMutation.isPending
-          }
-          submitError={
-            editingProjectId
-              ? updateMutation.isError
-                ? getErrorMessage(updateMutation.error)
-                : null
-              : createMutation.isError
-                ? getErrorMessage(createMutation.error)
-                : null
-          }
-          onClose={closeProjectModal}
-          onSubmit={
-            editingProjectId
-              ? submitProjectEdit
-              : (draft) => {
-                  setFeedback(null);
-                  createMutation.mutate(draft);
-                }
-          }
-        />
+        {(isCreateModalOpen || editingProjectId !== null) && (
+          <Suspense fallback={null}>
+            <ProjectModal
+              isOpen
+              mode={editingProjectId ? "edit" : "create"}
+              project={editingProject ?? undefined}
+              isSubmitting={
+                editingProjectId
+                  ? updateMutation.isPending
+                  : createMutation.isPending
+              }
+              submitError={
+                editingProjectId
+                  ? updateMutation.isError
+                    ? getErrorMessage(updateMutation.error)
+                    : null
+                  : createMutation.isError
+                    ? getErrorMessage(createMutation.error)
+                    : null
+              }
+              onClose={closeProjectModal}
+              onSubmit={
+                editingProjectId
+                  ? submitProjectEdit
+                  : (draft) => {
+                      setFeedback(null);
+                      createMutation.mutate(draft);
+                    }
+              }
+            />
+          </Suspense>
+        )}
 
-        <NotificationCentre
-          isOpen={isNotificationsOpen}
-          notifications={notifications}
-          onClose={closeNotifications}
-          onMarkAllRead={() =>
-            setNotifications((items) =>
-              items.map((item) => ({ ...item, unread: false })),
-            )
-          }
-        />
+        {isNotificationsOpen && (
+          <Suspense fallback={null}>
+            <NotificationCentre
+              isOpen
+              notifications={notifications}
+              onClose={closeNotifications}
+              onMarkAllRead={() =>
+                setNotifications((items) =>
+                  items.map((item) => ({ ...item, unread: false })),
+                )
+              }
+            />
+          </Suspense>
+        )}
       </div>
     </FlowOpsContext.Provider>
   );

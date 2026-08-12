@@ -92,12 +92,25 @@ Day 2 exit criterion: five axe scenarios and the full thirteen-test E2E suite
 pass against the compiled production build, with manual keyboard and focus
 checks recorded during implementation.
 
-### Days 3-5 - Planned
+### Day 3 - Performance - Complete
+
+- [x] Add a repeatable production-build measurement harness
+- [x] Record five-run baseline samples and medians
+- [x] Measure bundle size, initial transfer, routing, search, layout shift, and long tasks
+- [x] Identify the monolithic initial JavaScript bundle as the only actionable bottleneck
+- [x] Lazy-load project forms and notifications
+- [x] Rerun the identical scenarios and document the comparison
+- [x] Preserve healthy interaction, layout-stability, and long-task behaviour
+
+Day 3 exit criterion: the initial JavaScript bundle is 11.4 KB smaller, the
+initial compressed transfer is 2.8 KB smaller, and all unchanged performance
+areas remain within normal local measurement variance.
+
+### Days 4-5 - Planned
 
 The remaining sprint work will cover automated delivery checks, resilience
 gates, deployment evidence, and release documentation. Each day will be scoped
-before implementation so the sprint stays focused on production readiness
-rather than test-count growth.
+before implementation so the sprint stays focused on production readiness.
 
 ## Phase 5 — Production backend · Planned
 

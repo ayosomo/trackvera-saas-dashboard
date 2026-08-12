@@ -150,6 +150,7 @@ pnpm run lint
 pnpm run build
 pnpm run test:e2e
 pnpm run test:a11y
+pnpm run measure:performance
 ```
 
 Install Playwright's managed Chromium browser once before the first E2E run:
@@ -157,6 +158,10 @@ Install Playwright's managed Chromium browser once before the first E2E run:
 ```bash
 pnpm exec playwright install chromium
 ```
+
+The performance command measures an existing production preview on port 4190.
+See [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) for the repeatable method,
+baseline, optimisation decision, and before/after results.
 
 ## Data modes
 
