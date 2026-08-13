@@ -4,7 +4,7 @@ import { installProjectsApi } from "./support/projectsApi";
 async function useIdentity(page: Page, identityId: string) {
   await page.addInitScript((selectedIdentity) => {
     window.sessionStorage.setItem(
-      "flowops-mock-auth-session",
+      "trackvera-mock-auth-session",
       JSON.stringify({
         status: "authenticated",
         identityId: selectedIdentity,

@@ -2,7 +2,7 @@ import { environment } from "../config/environment";
 import type { Project, ProjectDraft } from "../domain/project";
 import { ApiError } from "./errors";
 
-const STORAGE_KEY = "flowops-created-projects";
+const STORAGE_KEY = "trackvera-created-projects";
 
 interface GetProjectsOptions {
   signal?: AbortSignal;

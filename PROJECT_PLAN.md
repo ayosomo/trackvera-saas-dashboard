@@ -1,4 +1,4 @@
-# FlowOps product plan
+# Trackvera product plan
 
 ## Product goal
 
@@ -54,7 +54,7 @@ supply chain without having to remember who owns a delay or what to do next.
 
 ## Phase 4 — Production readiness and delivery · In progress
 
-One-week sprint goal: prove that FlowOps' critical user journeys work through
+One-week sprint goal: prove that Trackvera's critical user journeys work through
 the production bundle and can become a dependable delivery gate.
 
 ### Day 1 — E2E foundation · Complete

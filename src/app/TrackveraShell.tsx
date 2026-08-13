@@ -30,10 +30,10 @@ import {
   type MockIdentity,
 } from "../security/permissions";
 import {
-  FlowOpsContext,
-  type FlowOpsContextValue,
-  type FlowOpsFeedback,
-} from "./FlowOpsContext";
+  TrackveraContext,
+  type TrackveraContextValue,
+  type TrackveraFeedback,
+} from "./TrackveraContext";
 
 const projectsQueryKey = ["projects"] as const;
 const NotificationCentre = lazy(() =>
@@ -97,7 +97,7 @@ function getErrorMessage(error: unknown): string {
     : "Something went wrong. Please try again.";
 }
 
-export function FlowOpsShell() {
+export function TrackveraShell() {
   const queryClient = useQueryClient();
   const location = useLocation();
   const navigate = useNavigate();
@@ -110,7 +110,7 @@ export function FlowOpsShell() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] =
     useState<OrderNotification[]>(initialNotifications);
-  const [feedback, setFeedback] = useState<FlowOpsFeedback | null>(null);
+  const [feedback, setFeedback] = useState<TrackveraFeedback | null>(null);
   const canCreateProjects = can("project:create");
   const canEditProjects = can("project:edit");
   const canUpdateDelivery = can("delivery:update");
@@ -401,7 +401,7 @@ export function FlowOpsShell() {
     (item) => item.unread,
   ).length;
 
-  const contextValue: FlowOpsContextValue = {
+  const contextValue: TrackveraContextValue = {
     projects,
     isLoading: projectsQuery.isLoading,
     isLoadError: projectsQuery.isError,
@@ -449,7 +449,7 @@ export function FlowOpsShell() {
   if (!user) return null;
 
   return (
-    <FlowOpsContext.Provider value={contextValue}>
+    <TrackveraContext.Provider value={contextValue}>
       <div className="app-shell">
         <a className="skip-link" href="#main-content">
           Skip to main content
@@ -521,7 +521,7 @@ export function FlowOpsShell() {
           </Suspense>
         )}
       </div>
-    </FlowOpsContext.Provider>
+    </TrackveraContext.Provider>
   );
 }
 
@@ -548,11 +548,11 @@ function Sidebar({
 
   return (
     <aside className="sidebar" aria-label="Primary navigation">
-      <Link className="brand" to="/projects" aria-label="FlowOps home">
+      <Link className="brand" to="/projects" aria-label="Trackvera home">
         <span className="brand__mark" aria-hidden="true">
           F
         </span>
-        <span>FlowOps</span>
+        <span>Trackvera</span>
       </Link>
       <p className="sidebar__workspace-label">MSP Order Control</p>
       <nav>

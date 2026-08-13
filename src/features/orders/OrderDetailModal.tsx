@@ -324,7 +324,7 @@ export function OrderDetailView({
               <span>Accountability now</span>
               <strong>{currentStage.accountable}</strong>
               <p>
-                FlowOps keeps {project.owner} responsible for orchestration
+                Trackvera keeps {project.owner} responsible for orchestration
                 while clearly showing which party must unblock the outcome.
               </p>
             </div>

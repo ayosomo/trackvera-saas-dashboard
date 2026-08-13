@@ -350,7 +350,7 @@ describe("MSP order orchestration", () => {
     renderApp("/missing-page");
     expect(
       await screen.findByRole("heading", {
-        name: "That FlowOps page isn’t here",
+        name: "That Trackvera page isn’t here",
       }),
     ).toBeInTheDocument();
   });

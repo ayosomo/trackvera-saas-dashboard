@@ -1,5 +1,5 @@
 import { createBrowserRouter, type RouteObject } from "react-router-dom";
-import { FlowOpsShell } from "./FlowOpsShell";
+import { TrackveraShell } from "./TrackveraShell";
 import { ForbiddenPage } from "../pages/ForbiddenPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { ProjectDetailPage } from "../pages/ProjectDetailPage";
@@ -24,7 +24,7 @@ export const routes: RouteObject[] = [
     children: [
       {
         path: "/",
-        Component: FlowOpsShell,
+        Component: TrackveraShell,
         ErrorBoundary: UnexpectedErrorPage,
         children: [
           { index: true, Component: RootRedirect },

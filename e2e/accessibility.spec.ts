@@ -119,7 +119,7 @@ test("service errors and not-found routes expose accessible recovery", async ({
 
   await page.goto("/route-that-does-not-exist");
   await expect(
-    page.getByRole("heading", { name: /That FlowOps page.*here/ }),
+    page.getByRole("heading", { name: /That Trackvera page.*here/ }),
   ).toBeVisible();
   await expectNoAccessibilityViolations(page, testInfo, "not-found");
 });

@@ -1,7 +1,7 @@
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { FeedbackMessage } from "../components/FeedbackMessage";
 import { OrderDetailView } from "../features/orders/OrderDetailModal";
-import { useFlowOps } from "../app/FlowOpsContext";
+import { useTrackvera } from "../app/TrackveraContext";
 
 interface DetailLocationState {
   returnTo?: string;
@@ -26,7 +26,7 @@ export function ProjectDetailPage() {
     advanceMilestone,
     addBlocker,
     resolveBlocker,
-  } = useFlowOps();
+  } = useTrackvera();
   const project = projects.find((item) => item.id === projectId);
   const returnTo =
     (location.state as DetailLocationState | null)?.returnTo ?? "/projects";

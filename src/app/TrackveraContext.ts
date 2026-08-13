@@ -1,18 +1,18 @@
 import { createContext, useContext } from "react";
 import type { OrderBlocker, Project } from "../domain/project";
 
-export interface FlowOpsFeedback {
+export interface TrackveraFeedback {
   kind: "success" | "error";
   message: string;
 }
 
-export interface FlowOpsContextValue {
+export interface TrackveraContextValue {
   projects: Project[];
   isLoading: boolean;
   isLoadError: boolean;
   loadError: unknown;
   refetchProjects: () => void;
-  feedback: FlowOpsFeedback | null;
+  feedback: TrackveraFeedback | null;
   dismissFeedback: () => void;
   openNewProject: (returnFocusTo?: HTMLElement | null) => void;
   openProjectEditor: (project: Project) => void;
@@ -27,10 +27,10 @@ export interface FlowOpsContextValue {
   resolveBlocker: (project: Project, blockerId: string) => void;
 }
 
-export const FlowOpsContext = createContext<FlowOpsContextValue | null>(null);
+export const TrackveraContext = createContext<TrackveraContextValue | null>(null);
 
-export function useFlowOps(): FlowOpsContextValue {
-  const value = useContext(FlowOpsContext);
-  if (!value) throw new Error("useFlowOps must be used inside FlowOpsShell.");
+export function useTrackvera(): TrackveraContextValue {
+  const value = useContext(TrackveraContext);
+  if (!value) throw new Error("useTrackvera must be used inside TrackveraShell.");
   return value;
 }

@@ -19,7 +19,7 @@ import {
   type AuthContextValue,
 } from "./AuthContext";
 
-const SESSION_STORAGE_KEY = "flowops-mock-auth-session";
+const SESSION_STORAGE_KEY = "trackvera-mock-auth-session";
 const SESSION_DURATION_MS = 30 * 60 * 1000;
 const defaultIdentity = mockIdentities.find(
   (identity) => identity.role === "operations-manager",

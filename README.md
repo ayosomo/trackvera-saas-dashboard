@@ -1,6 +1,6 @@
-# FlowOps
+# Trackvera
 
-FlowOps is a frontend SaaS dashboard prototype designed around a
+Trackvera is a frontend SaaS dashboard prototype designed around a
 production-style architecture. It gives MSP project coordinators one
 order-control workspace for managing customer services across a third-party
 ordering partner and a fulfilment supplier.
@@ -14,13 +14,13 @@ question:
 
 ## Product preview
 
-![FlowOps order control tower showing delivery health, RACI ownership, search, and status filters](./docs/images/flowops-control-tower.png)
+![Trackvera order control tower showing delivery health, RACI ownership, search, and status filters](./docs/images/trackvera-control-tower.png)
 
 <p align="center">
   <img
-    src="./docs/images/flowops-mobile-order-card.png"
+    src="./docs/images/trackvera-mobile-order-card.png"
     width="360"
-    alt="FlowOps mobile layout showing the at-risk filter and a responsive order card"
+    alt="Trackvera mobile layout showing the at-risk filter and a responsive order card"
   />
 </p>
 
@@ -108,7 +108,7 @@ party is accountable for the outcome.
 
 ### Owner notifications
 
-FlowOps creates an in-app notification when:
+Trackvera creates an in-app notification when:
 
 - A new tracker is assigned
 - A milestone is reached
@@ -177,7 +177,7 @@ persistence logic remains inside `src/api/projects.ts`.
 
 ### Demo mode
 
-Without an API URL, FlowOps loads realistic MSP orders from
+Without an API URL, Trackvera loads realistic MSP orders from
 `public/projects.json` and saves created or updated orders in browser local
 storage. This makes creation, milestone advancement, exception logging, and
 resolution usable in a static frontend.
@@ -205,8 +205,8 @@ introduced without changing the UI components.
 src/
 ├── app/
 │   ├── AppRoutes.tsx
-│   ├── FlowOpsContext.ts
-│   ├── FlowOpsShell.tsx
+│   ├── TrackveraContext.ts
+│   ├── TrackveraShell.tsx
 │   └── router.ts
 ├── api/
 │   └── projects.ts
@@ -336,7 +336,7 @@ Five of those scenarios run axe against distinct application states:
 - Project-detail routing and heading structure
 - Service-error and not-found recovery states
 
-`pnpm run test:e2e` builds FlowOps with `VITE_API_URL=/api`, starts the Vite
+`pnpm run test:e2e` builds Trackvera with `VITE_API_URL=/api`, starts the Vite
 production preview on port 4180, and supplies a deterministic API fixture at
 the repository boundary. This exercises the real production bundle while
 keeping success and failure scenarios isolated from external services.

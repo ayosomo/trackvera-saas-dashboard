@@ -46,18 +46,18 @@ async function runScenario(browser) {
   const page = await context.newPage();
 
   await page.addInitScript(() => {
-    window.__flowOpsPerformance = { cumulativeLayoutShift: 0, longTasks: [] };
+    window.__trackveraPerformance = { cumulativeLayoutShift: 0, longTasks: [] };
 
     new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
         if (!entry.hadRecentInput) {
-          window.__flowOpsPerformance.cumulativeLayoutShift += entry.value;
+          window.__trackveraPerformance.cumulativeLayoutShift += entry.value;
         }
       }
     }).observe({ type: "layout-shift", buffered: true });
 
     new PerformanceObserver((list) => {
-      window.__flowOpsPerformance.longTasks.push(
+      window.__trackveraPerformance.longTasks.push(
         ...list.getEntries().map((entry) => entry.duration),
       );
     }).observe({ type: "longtask", buffered: true });
@@ -100,7 +100,7 @@ async function runScenario(browser) {
   await page.waitForTimeout(100);
   const browserMetrics = await page.evaluate(() => {
     const navigation = performance.getEntriesByType("navigation")[0];
-    const collected = window.__flowOpsPerformance;
+    const collected = window.__trackveraPerformance;
 
     return {
       domContentLoadedMs: navigation.domContentLoadedEventEnd,

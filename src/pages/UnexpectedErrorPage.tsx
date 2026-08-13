@@ -12,7 +12,7 @@ export function UnexpectedErrorPage() {
     <main className="unexpected-error-page">
       <div className="route-state" role="alert">
         <span className="route-state__code">Unexpected error</span>
-        <h1>FlowOps hit a problem</h1>
+        <h1>Trackvera hit a problem</h1>
         <p>{detail}</p>
         <p>Your order data has not been changed.</p>
         <Link className="button button--primary" to="/projects">

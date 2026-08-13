@@ -240,7 +240,7 @@ test("provides recovery paths for missing projects and unknown routes", async ({
 
   await page.goto("/route-that-does-not-exist");
   await expect(
-    page.getByRole("heading", { name: /That FlowOps page.*here/ }),
+    page.getByRole("heading", { name: /That Trackvera page.*here/ }),
   ).toBeVisible();
   await page.getByRole("link", { name: "Return to control tower" }).click();
   await expect(page).toHaveURL(/\/projects$/);

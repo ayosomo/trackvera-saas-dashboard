@@ -19,7 +19,7 @@ import {
 } from "../features/projects/projectListState";
 import { ProjectTable } from "../features/projects/ProjectTable";
 import { compactCurrencyFormatter, formatLongDate } from "../lib/formatters";
-import { useFlowOps } from "../app/FlowOpsContext";
+import { useTrackvera } from "../app/TrackveraContext";
 
 const pageSize = 5;
 
@@ -42,7 +42,7 @@ export function ProjectsPage() {
     openNotifications,
     unreadNotificationCount,
     canCreateProjects,
-  } = useFlowOps();
+  } = useTrackvera();
   const newProjectButtonRef = useRef<HTMLButtonElement>(null);
   const notificationButtonRef = useRef<HTMLButtonElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
