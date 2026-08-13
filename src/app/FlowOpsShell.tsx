@@ -2,13 +2,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   lazy,
   Suspense,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { ApiError } from "../api/errors";
 import { createProject, getProjects, updateProject } from "../api/projects";
 import type { OrderNotification } from "../features/orders/NotificationCentre";
 import {
@@ -21,6 +23,12 @@ import type {
   Project,
   ProjectDraft,
 } from "../domain/project";
+import { useAuth } from "../security/AuthContext";
+import {
+  mockIdentities,
+  roleLabels,
+  type MockIdentity,
+} from "../security/permissions";
 import {
   FlowOpsContext,
   type FlowOpsContextValue,
@@ -92,6 +100,8 @@ function getErrorMessage(error: unknown): string {
 export function FlowOpsShell() {
   const queryClient = useQueryClient();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, can, switchIdentity, signOut, expireSession } = useAuth();
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const notificationReturnFocusRef = useRef<HTMLElement | null>(null);
   const previousPathnameRef = useRef(location.pathname);
@@ -101,6 +111,31 @@ export function FlowOpsShell() {
   const [notifications, setNotifications] =
     useState<OrderNotification[]>(initialNotifications);
   const [feedback, setFeedback] = useState<FlowOpsFeedback | null>(null);
+  const canCreateProjects = can("project:create");
+  const canEditProjects = can("project:edit");
+  const canUpdateDelivery = can("delivery:update");
+
+  const handleApiAccessError = useCallback(
+    (error: unknown): boolean => {
+      if (!(error instanceof ApiError)) return false;
+
+      if (error.status === 401) {
+        expireSession();
+        return true;
+      }
+
+      if (error.status === 403) {
+        navigate("/forbidden", {
+          replace: true,
+          state: { detail: error.message },
+        });
+        return true;
+      }
+
+      return false;
+    },
+    [expireSession, navigate],
+  );
 
   useEffect(() => {
     if (previousPathnameRef.current === location.pathname) return;
@@ -113,6 +148,10 @@ export function FlowOpsShell() {
     queryKey: projectsQueryKey,
     queryFn: ({ signal }) => getProjects({ signal }),
   });
+
+  useEffect(() => {
+    if (projectsQuery.isError) handleApiAccessError(projectsQuery.error);
+  }, [handleApiAccessError, projectsQuery.error, projectsQuery.isError]);
 
   const projects = useMemo(
     () => projectsQuery.data ?? [],
@@ -166,6 +205,7 @@ export function FlowOpsShell() {
       if (context) {
         queryClient.setQueryData(projectsQueryKey, context.previousProjects);
       }
+      if (handleApiAccessError(_error)) return;
       setFeedback({
         kind: "error",
         message:
@@ -212,6 +252,7 @@ export function FlowOpsShell() {
       if (context) {
         queryClient.setQueryData(projectsQueryKey, context.previousProjects);
       }
+      if (handleApiAccessError(_error)) return;
       setFeedback({
         kind: "error",
         message:
@@ -255,7 +296,15 @@ export function FlowOpsShell() {
     window.setTimeout(() => notificationReturnFocusRef.current?.focus(), 0);
   }
 
+  function showForbidden(detail: string) {
+    navigate("/forbidden", { state: { detail } });
+  }
+
   function submitProjectEdit(draft: ProjectDraft) {
+    if (!canEditProjects) {
+      showForbidden("Your role cannot edit commercial project details.");
+      return;
+    }
     if (!editingProject) return;
 
     setFeedback(null);
@@ -272,6 +321,10 @@ export function FlowOpsShell() {
   }
 
   function advanceMilestone(project: Project) {
+    if (!canUpdateDelivery) {
+      showForbidden("Your role cannot update delivery milestones.");
+      return;
+    }
     const nextStage = getNextStage(project.currentStage);
     if (!nextStage) return;
 
@@ -285,6 +338,10 @@ export function FlowOpsShell() {
   }
 
   function addBlocker(project: Project, blocker: OrderBlocker) {
+    if (!canUpdateDelivery) {
+      showForbidden("Your role cannot manage delivery exceptions.");
+      return;
+    }
     updateMutation.mutate({
       project: {
         ...project,
@@ -304,6 +361,10 @@ export function FlowOpsShell() {
   }
 
   function resolveBlocker(project: Project, blockerId: string) {
+    if (!canUpdateDelivery) {
+      showForbidden("Your role cannot resolve delivery exceptions.");
+      return;
+    }
     const blockers = project.blockers.map((blocker) =>
       blocker.id === blockerId
         ? ({ ...blocker, status: "Resolved" } as const)
@@ -349,12 +410,20 @@ export function FlowOpsShell() {
     feedback,
     dismissFeedback: () => setFeedback(null),
     openNewProject: (returnFocusTo) => {
+      if (!canCreateProjects) {
+        showForbidden("Your role cannot create project trackers.");
+        return;
+      }
       returnFocusRef.current = returnFocusTo ?? null;
       createMutation.reset();
       setFeedback(null);
       setIsCreateModalOpen(true);
     },
     openProjectEditor: (project) => {
+      if (!canEditProjects) {
+        showForbidden("Your role cannot edit commercial project details.");
+        return;
+      }
       updateMutation.reset();
       setFeedback(null);
       setEditingProjectId(project.id);
@@ -368,11 +437,16 @@ export function FlowOpsShell() {
       setIsNotificationsOpen(true);
     },
     unreadNotificationCount,
+    canCreateProjects,
+    canEditProjects,
+    canUpdateDelivery,
     isUpdating: updateMutation.isPending,
     advanceMilestone,
     addBlocker,
     resolveBlocker,
   };
+
+  if (!user) return null;
 
   return (
     <FlowOpsContext.Provider value={contextValue}>
@@ -383,6 +457,13 @@ export function FlowOpsShell() {
         <Sidebar
           projectCount={projects.length}
           openExceptionCount={openExceptions}
+          user={user}
+          onIdentityChange={switchIdentity}
+          onExpireSession={expireSession}
+          onSignOut={() => {
+            signOut();
+            navigate("/sign-in", { replace: true });
+          }}
         />
         <main id="main-content" tabIndex={-1}>
           <Outlet />
@@ -413,6 +494,10 @@ export function FlowOpsShell() {
                 editingProjectId
                   ? submitProjectEdit
                   : (draft) => {
+                      if (!canCreateProjects) {
+                        showForbidden("Your role cannot create project trackers.");
+                        return;
+                      }
                       setFeedback(null);
                       createMutation.mutate(draft);
                     }
@@ -443,9 +528,20 @@ export function FlowOpsShell() {
 interface SidebarProps {
   projectCount: number;
   openExceptionCount: number;
+  user: MockIdentity;
+  onIdentityChange: (identityId: string) => void;
+  onExpireSession: () => void;
+  onSignOut: () => void;
 }
 
-function Sidebar({ projectCount, openExceptionCount }: SidebarProps) {
+function Sidebar({
+  projectCount,
+  openExceptionCount,
+  user,
+  onIdentityChange,
+  onExpireSession,
+  onSignOut,
+}: SidebarProps) {
   const location = useLocation();
   const isProjectDetail = /^\/projects\/[^/]+$/.test(location.pathname);
   const isExceptionView = new URLSearchParams(location.search).get("status") === "Blocked";
@@ -493,15 +589,41 @@ function Sidebar({ projectCount, openExceptionCount }: SidebarProps) {
       </nav>
       <div className="sidebar__footer">
         <div className="team-avatar" aria-hidden="true">
-          DO
+          {user.name
+            .split(" ")
+            .map((part) => part[0])
+            .join("")}
         </div>
         <div>
-          <strong>Delivery Ops</strong>
-          <span>Order coordination</span>
+          <strong>{user.name}</strong>
+          <span>{roleLabels[user.role]}</span>
         </div>
-        <button type="button" aria-label="Workspace options">
-          ···
-        </button>
+        <details className="session-menu">
+          <summary aria-label="Security demo options">···</summary>
+          <div className="session-menu__panel">
+            <p className="eyebrow">Security demo</p>
+            <label>
+              <span>Active identity</span>
+              <select
+                aria-label="Active demo identity"
+                value={user.id}
+                onChange={(event) => onIdentityChange(event.target.value)}
+              >
+                {mockIdentities.map((identity) => (
+                  <option value={identity.id} key={identity.id}>
+                    {identity.name} · {roleLabels[identity.role]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button type="button" onClick={onExpireSession}>
+              Expire session
+            </button>
+            <button type="button" onClick={onSignOut}>
+              Log out
+            </button>
+          </div>
+        </details>
       </div>
     </aside>
   );

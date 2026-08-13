@@ -17,6 +17,8 @@ import {
 
 interface OrderDetailViewProps {
   project: Project;
+  canEdit: boolean;
+  canUpdateDelivery: boolean;
   isUpdating: boolean;
   onClose: () => void;
   onEdit: (project: Project) => void;
@@ -27,6 +29,8 @@ interface OrderDetailViewProps {
 
 export function OrderDetailView({
   project,
+  canEdit,
+  canUpdateDelivery,
   isUpdating,
   onClose,
   onEdit,
@@ -85,14 +89,16 @@ export function OrderDetailView({
             </p>
           </div>
           <div className="tracker-header__actions">
-            <button
-              type="button"
-              className="button button--secondary button--small"
-              onClick={() => onEdit(project)}
-              disabled={isUpdating}
-            >
-              Edit details
-            </button>
+            {canEdit && (
+              <button
+                type="button"
+                className="button button--secondary button--small"
+                onClick={() => onEdit(project)}
+                disabled={isUpdating}
+              >
+                Edit details
+              </button>
+            )}
             <button
               type="button"
               className="button button--secondary button--small"
@@ -178,16 +184,18 @@ export function OrderDetailView({
                   <p className="eyebrow">Delay control</p>
                   <h2>Exceptions and playbooks</h2>
                 </div>
-                <button
-                  className="button button--secondary button--small"
-                  type="button"
-                  onClick={() => setShowIssueForm((value) => !value)}
-                >
-                  {showIssueForm ? "Cancel" : "＋ Log issue"}
-                </button>
+                {canUpdateDelivery && (
+                  <button
+                    className="button button--secondary button--small"
+                    type="button"
+                    onClick={() => setShowIssueForm((value) => !value)}
+                  >
+                    {showIssueForm ? "Cancel" : "＋ Log issue"}
+                  </button>
+                )}
               </div>
 
-              {showIssueForm && (
+              {canUpdateDelivery && showIssueForm && (
                 <form className="issue-form" onSubmit={submitIssue}>
                   <label>
                     <span>Issue type</span>
@@ -260,14 +268,16 @@ export function OrderDetailView({
                         <span>Coordinator’s next move</span>
                         <p>{blocker.nextAction}</p>
                       </div>
-                      <button
-                        type="button"
-                        className="resolve-button"
-                        onClick={() => onResolveBlocker(project, blocker.id)}
-                        disabled={isUpdating}
-                      >
-                        ✓ Mark resolved
-                      </button>
+                      {canUpdateDelivery && (
+                        <button
+                          type="button"
+                          className="resolve-button"
+                          onClick={() => onResolveBlocker(project, blocker.id)}
+                          disabled={isUpdating}
+                        >
+                          ✓ Mark resolved
+                        </button>
+                      )}
                     </article>
                   ))}
                 </div>
@@ -319,19 +329,25 @@ export function OrderDetailView({
               </p>
             </div>
 
-            <button
-              type="button"
-              className="button button--primary advance-button"
-              onClick={() => onAdvance(project)}
-              disabled={isUpdating || hasBlockingIssue || !nextStage}
-            >
-              {isUpdating
-                ? "Updating…"
-                : nextStage
-                  ? `Complete milestone → ${nextStage.shortLabel}`
-                  : "Journey complete"}
-            </button>
-            {hasBlockingIssue && (
+            {canUpdateDelivery ? (
+              <button
+                type="button"
+                className="button button--primary advance-button"
+                onClick={() => onAdvance(project)}
+                disabled={isUpdating || hasBlockingIssue || !nextStage}
+              >
+                {isUpdating
+                  ? "Updating…"
+                  : nextStage
+                    ? `Complete milestone → ${nextStage.shortLabel}`
+                    : "Journey complete"}
+              </button>
+            ) : (
+              <p className="permission-notice">
+                Read-only access · delivery updates require an operational role.
+              </p>
+            )}
+            {canUpdateDelivery && hasBlockingIssue && (
               <p className="advance-help">
                 Resolve open exceptions before completing this milestone.
               </p>

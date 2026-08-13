@@ -5,8 +5,10 @@ import type { Project, ProjectDraft } from "../../src/domain/project";
 
 interface ProjectsApiOptions {
   getFailures?: number;
+  getStatus?: 401 | 403;
   createFailures?: number;
   updateFailures?: number;
+  updateStatus?: 401 | 403;
   mutationDelayMs?: number;
 }
 
@@ -53,6 +55,15 @@ export async function installProjectsApi(
     const projectId = pathParts.at(-1) === "projects" ? null : pathParts.at(-1);
 
     if (method === "GET" && !projectId) {
+      if (options.getStatus) {
+        await route.fulfill({
+          status: options.getStatus,
+          contentType: "application/json",
+          body: JSON.stringify({ message: "Access rejected" }),
+        });
+        return;
+      }
+
       if (remainingGetFailures > 0) {
         remainingGetFailures -= 1;
         await respondWithError(route, "The portfolio service is unavailable.");
@@ -92,6 +103,15 @@ export async function installProjectsApi(
 
     if (method === "PATCH" && projectId) {
       await delay(mutationDelayMs);
+      if (options.updateStatus) {
+        await route.fulfill({
+          status: options.updateStatus,
+          contentType: "application/json",
+          body: JSON.stringify({ message: "Access rejected" }),
+        });
+        return;
+      }
+
       if (remainingUpdateFailures > 0) {
         remainingUpdateFailures -= 1;
         await respondWithError(route, "The order service rejected the update.");

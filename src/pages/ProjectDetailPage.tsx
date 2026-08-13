@@ -20,6 +20,8 @@ export function ProjectDetailPage() {
     feedback,
     dismissFeedback,
     openProjectEditor,
+    canEditProjects,
+    canUpdateDelivery,
     isUpdating,
     advanceMilestone,
     addBlocker,
@@ -85,6 +87,8 @@ export function ProjectDetailPage() {
       <FeedbackMessage feedback={feedback} onDismiss={dismissFeedback} />
       <OrderDetailView
         project={project}
+        canEdit={canEditProjects}
+        canUpdateDelivery={canUpdateDelivery}
         isUpdating={isUpdating}
         onClose={() => navigate(returnTo)}
         onEdit={openProjectEditor}

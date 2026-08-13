@@ -18,6 +18,9 @@ export interface FlowOpsContextValue {
   openProjectEditor: (project: Project) => void;
   openNotifications: (returnFocusTo?: HTMLElement | null) => void;
   unreadNotificationCount: number;
+  canCreateProjects: boolean;
+  canEditProjects: boolean;
+  canUpdateDelivery: boolean;
   isUpdating: boolean;
   advanceMilestone: (project: Project) => void;
   addBlocker: (project: Project, blocker: OrderBlocker) => void;

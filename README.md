@@ -150,6 +150,7 @@ pnpm run lint
 pnpm run build
 pnpm run test:e2e
 pnpm run test:a11y
+pnpm run test:security
 pnpm run measure:performance
 ```
 
@@ -162,6 +163,12 @@ pnpm exec playwright install chromium
 The performance command measures an existing production preview on port 4190.
 See [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) for the repeatable method,
 baseline, optimisation decision, and before/after results.
+
+The Phase 4 frontend security contract uses password-free mock identities,
+protected routes, capability-based interfaces, controlled 401/403 handling,
+session expiry, and deployment headers. See
+[`docs/SECURITY.md`](docs/SECURITY.md) for the permission matrix, trust boundary,
+and production identity-provider checklist.
 
 ## Data modes
 

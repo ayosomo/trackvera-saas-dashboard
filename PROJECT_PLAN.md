@@ -106,11 +106,28 @@ Day 3 exit criterion: the initial JavaScript bundle is 11.4 KB smaller, the
 initial compressed transfer is 2.8 KB smaller, and all unchanged performance
 areas remain within normal local measurement variance.
 
-### Days 4-5 - Planned
+### Day 4 - Security and permissions - Complete
 
-The remaining sprint work will cover automated delivery checks, resilience
-gates, deployment evidence, and release documentation. Each day will be scoped
-before implementation so the sprint stays focused on production readiness.
+- [x] Add a mock authentication provider without passwords
+- [x] Protect portfolio and project routes
+- [x] Define capability-based permissions for four operational roles
+- [x] Hide or replace actions that a role cannot perform
+- [x] Guard mutation entry points in addition to hiding controls
+- [x] Clear cached server state on identity changes, logout, and expiry
+- [x] Map API 401 and 403 responses to controlled application states
+- [x] Keep API-provided markup inert through React text rendering
+- [x] Reject secret-like Vite environment variable names
+- [x] Add baseline CSP and security headers for deployment
+- [x] Document the API enforcement boundary and identity-provider roadmap
+
+Day 4 exit criterion: authentication and permission behaviour is demonstrable
+with mock identities while the documentation makes clear that production
+authorisation belongs to the API.
+
+### Day 5 - Planned
+
+The remaining sprint work will cover automated delivery checks, dependency
+remediation, deployment evidence, and release documentation.
 
 ## Phase 5 — Production backend · Planned
 

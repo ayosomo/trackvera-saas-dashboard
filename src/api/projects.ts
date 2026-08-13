@@ -1,5 +1,6 @@
 import { environment } from "../config/environment";
 import type { Project, ProjectDraft } from "../domain/project";
+import { ApiError } from "./errors";
 
 const STORAGE_KEY = "flowops-created-projects";
 
@@ -9,7 +10,18 @@ interface GetProjectsOptions {
 
 async function readJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    throw new Error(`The service returned ${response.status}. Please try again.`);
+    if (response.status === 401) {
+      throw new ApiError("Your session is no longer valid.", 401);
+    }
+
+    if (response.status === 403) {
+      throw new ApiError("Your role cannot complete this request.", 403);
+    }
+
+    throw new ApiError(
+      `The service returned ${response.status}. Please try again.`,
+      response.status,
+    );
   }
 
   return (await response.json()) as T;

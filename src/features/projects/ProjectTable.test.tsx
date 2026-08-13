@@ -45,4 +45,19 @@ describe("ProjectTable", () => {
     await user.click(screen.getByRole("button", { name: "Clear filters" }));
     expect(onClearFilters).toHaveBeenCalledOnce();
   });
+
+  it("renders API-provided text without interpreting markup", () => {
+    const unsafeCustomer = '<script data-testid="injected">alert(1)</script>';
+    const { container } = render(
+      <ProjectTable
+        projects={[{ ...sampleProjects[0]!, customer: unsafeCustomer }]}
+        hasFilters={false}
+        onClearFilters={vi.fn()}
+        onOpenProject={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(unsafeCustomer)).toBeInTheDocument();
+    expect(container.querySelector("script")).toBeNull();
+  });
 });

@@ -41,6 +41,7 @@ export function ProjectsPage() {
     openNewProject,
     openNotifications,
     unreadNotificationCount,
+    canCreateProjects,
   } = useFlowOps();
   const newProjectButtonRef = useRef<HTMLButtonElement>(null);
   const notificationButtonRef = useRef<HTMLButtonElement>(null);
@@ -121,15 +122,19 @@ export function ProjectsPage() {
               <strong>{unreadNotificationCount}</strong>
             )}
           </button>
-          <button
-            ref={newProjectButtonRef}
-            type="button"
-            className="button button--primary new-project-button"
-            onClick={() => openNewProject(newProjectButtonRef.current)}
-          >
-            <span aria-hidden="true">＋</span>
-            New order
-          </button>
+          {canCreateProjects ? (
+            <button
+              ref={newProjectButtonRef}
+              type="button"
+              className="button button--primary new-project-button"
+              onClick={() => openNewProject(newProjectButtonRef.current)}
+            >
+              <span aria-hidden="true">＋</span>
+              New order
+            </button>
+          ) : (
+            <span className="permission-chip">Read-only portfolio</span>
+          )}
         </div>
       </header>
 
