@@ -124,10 +124,22 @@ Day 4 exit criterion: authentication and permission behaviour is demonstrable
 with mock identities while the documentation makes clear that production
 authorisation belongs to the API.
 
-### Day 5 - Planned
+### Day 5 - CI/CD and deployment - In progress
 
-The remaining sprint work will cover automated delivery checks, dependency
-remediation, deployment evidence, and release documentation.
+- [x] Add an explicit strict TypeScript check
+- [x] Run lint, type-check, unit/component tests, build, and E2E on pull requests
+- [x] Test Playwright journeys against the compiled production bundle
+- [x] Upload the production bundle and Playwright report as CI artifacts
+- [x] Gate the Vercel release workflow on a successful `main` CI run
+- [x] Add production SPA rewrites and deployment security headers
+- [x] Document architecture, environment variables, deployment, and rollback
+- [x] Publish a claimable Vercel production deployment
+- [ ] Claim the deployment in Vercel and configure GitHub deployment secrets
+- [ ] Verify the permanent public URL and first gated GitHub release
+
+Day 5 exit criterion: every pull request is automatically verified, failed
+checks cannot start a release, and the verified frontend is available at a
+permanent public URL.
 
 ## Phase 5 — Production backend · Planned
 

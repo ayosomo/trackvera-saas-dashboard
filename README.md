@@ -1,5 +1,7 @@
 # Trackvera
 
+[![CI](https://github.com/ayosomo/trackvera-saas-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/ayosomo/trackvera-saas-dashboard/actions/workflows/ci.yml)
+
 Trackvera is a frontend SaaS dashboard prototype designed around a
 production-style architecture. It gives MSP project coordinators one
 order-control workspace for managing customer services across a third-party
@@ -147,6 +149,7 @@ Quality checks:
 ```bash
 pnpm run test
 pnpm run lint
+pnpm run typecheck
 pnpm run build
 pnpm run test:e2e
 pnpm run test:a11y
@@ -200,6 +203,9 @@ The API boundary can be renamed to `/orders` when a production contract is
 introduced without changing the UI components.
 
 ## Architecture
+
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the runtime, security,
+data-flow, and gated-delivery diagrams plus the responsibility of each layer.
 
 ```text
 src/
@@ -315,7 +321,7 @@ Vitest and React Testing Library cover:
 - Milestone advancement and owner notifications
 - Direct project routes and not-found navigation
 
-Playwright covers thirteen critical journeys through the compiled production
+Playwright covers eighteen critical journeys through the compiled production
 bundle:
 
 - Loading, searching, filtering, sorting, and paginating the order portfolio
@@ -336,9 +342,45 @@ Five of those scenarios run axe against distinct application states:
 - Project-detail routing and heading structure
 - Service-error and not-found recovery states
 
+Five security scenarios cover:
+
+- Protected-route redirection, mock sign-in, and logout
+- Read-only controls and project access
+- Engineer-only delivery updates
+- Session expiry, resumption, and intended-route preservation
+- Controlled API 401 and 403 responses
+
 `pnpm run test:e2e` builds Trackvera with `VITE_API_URL=/api`, starts the Vite
 production preview on port 4180, and supplies a deterministic API fixture at
 the repository boundary. This exercises the real production bundle while
 keeping success and failure scenarios isolated from external services.
+
+## CI/CD and deployment
+
+Every pull request and push to `main` runs lint, strict TypeScript, unit and
+component tests, the production build, and all Playwright journeys through
+GitHub Actions. Production deployment is a separate workflow that starts only
+after CI succeeds for a push to `main`; failed or cancelled checks cannot start
+the release job.
+
+Trackvera is configured for Vercel with SPA route rewrites and deployment
+security headers. See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for required
+secrets, environment configuration, manual deployment, production checks, and
+rollback guidance.
+
+## Known limitations
+
+- Authentication uses password-free mock identities; it is not a production
+  identity system.
+- Permission-aware controls improve the interface, but a future API must
+  enforce authorisation and tenant isolation server-side.
+- Demo creation and updates persist only in the current browser, not across
+  users or devices.
+- Filtering, sorting, and pagination are client-side for the current portfolio
+  size.
+- Notifications are in-app events; email, Teams, Slack, and service-desk
+  delivery require backend integrations.
+- Performance figures are controlled localhost comparisons rather than field
+  Core Web Vitals.
 
 See [PROJECT_PLAN.md](./PROJECT_PLAN.md) for the next delivery phases.
