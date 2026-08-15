@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/ayosomo/trackvera-saas-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/ayosomo/trackvera-saas-dashboard/actions/workflows/ci.yml)
 
+**Live demo:** [trackvera-saas-dashboard.vercel.app](https://trackvera-saas-dashboard.vercel.app/projects)
+
 Trackvera is a frontend SaaS dashboard prototype designed around a
 production-style architecture. It gives MSP project coordinators one
 order-control workspace for managing customer services across a third-party
@@ -367,6 +369,10 @@ Trackvera is configured for Vercel with SPA route rewrites and deployment
 security headers. See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for required
 secrets, environment configuration, manual deployment, production checks, and
 rollback guidance.
+
+The public deployment has been verified at `/projects` and on a directly
+loaded project-detail route. Both routes return the application shell with the
+configured CSP, frame, MIME, referrer, and permissions-policy headers.
 
 ## Known limitations
 

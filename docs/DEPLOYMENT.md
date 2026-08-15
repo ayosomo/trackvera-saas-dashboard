@@ -5,6 +5,13 @@ deployment uses the compiled `dist` directory, preserves React Router URLs
 through a rewrite to `index.html`, and applies the security headers in
 `vercel.json`.
 
+Production: [trackvera-saas-dashboard.vercel.app](https://trackvera-saas-dashboard.vercel.app/projects)
+
+The initial public deployment is connected to the GitHub repository through
+Vercel. The Actions-based release workflow below remains disabled until its
+scoped credentials are configured; this prevents an incomplete release job
+from failing noisily.
+
 ## Production pipeline
 
 1. A pull request runs `.github/workflows/ci.yml`.

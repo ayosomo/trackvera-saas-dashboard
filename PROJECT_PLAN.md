@@ -134,8 +134,9 @@ authorisation belongs to the API.
 - [x] Add production SPA rewrites and deployment security headers
 - [x] Document architecture, environment variables, deployment, and rollback
 - [x] Publish a claimable Vercel production deployment
-- [ ] Claim the deployment in Vercel and configure GitHub deployment secrets
-- [ ] Verify the permanent public URL and first gated GitHub release
+- [x] Claim the deployment in Vercel
+- [x] Verify the permanent public URL and direct application routes
+- [ ] Configure GitHub deployment secrets and verify the first gated release
 
 Day 5 exit criterion: every pull request is automatically verified, failed
 checks cannot start a release, and the verified frontend is available at a
