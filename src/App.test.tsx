@@ -76,7 +76,7 @@ async function fillOrderWizard(user: ReturnType<typeof userEvent.setup>) {
   );
   await user.type(
     screen.getByLabelText(/^fulfilment supplier/i),
-    "Openreach",
+    "Horizon Fibre",
   );
   await user.type(screen.getByLabelText(/^crf reference/i), "CRF-NEW-001");
   await user.type(
@@ -155,7 +155,7 @@ describe("MSP order orchestration", () => {
       owner: "Jamie Singh",
       salesOwner: "Alex Morgan",
       thirdParty: "ChannelLink",
-      supplier: "Openreach",
+      supplier: "Horizon Fibre",
       crfReference: "CRF-NEW-001",
       thirdPartyReference: "CL-NEW-001",
       supplierReference: "",

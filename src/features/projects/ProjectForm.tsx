@@ -318,7 +318,7 @@ export function ProjectForm({
               value={values.supplier}
               error={errors.supplier}
               onChange={(value) => updateValue("supplier", value)}
-              placeholder="e.g. Openreach"
+              placeholder="e.g. Horizon Fibre"
             />
             <TextField
               label="CRF reference"

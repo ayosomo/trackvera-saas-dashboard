@@ -1,5 +1,16 @@
 # Frontend security and permission contract
 
+## Reporting a vulnerability
+
+Use GitHub's private vulnerability reporting for this repository and avoid
+including exploit details in a public issue. Reports should describe the
+affected route or component, reproduction steps, impact, and a suggested fix
+when available.
+
+Only the current `main` branch is supported. Trackvera is a portfolio frontend
+with fictional demo data and mock authentication; it does not process real
+credentials or customer records.
+
 ## Scope and trust boundary
 
 This phase establishes the production-facing frontend contract with mock

@@ -16,6 +16,20 @@ question:
 
 > What needs to happen next, and who is accountable for making it happen?
 
+## Portfolio scope and data
+
+This public repository contains the portfolio frontend only. All customers,
+people, partners, suppliers, locations, references, order values, and delivery
+events in the demo are fictional. They do not represent an employer, customer,
+supplier account, or live order.
+
+Authentication is a password-free mock used to demonstrate protected routes,
+session expiry, and permission-aware interfaces. It does not issue a real
+session or authenticate against a production identity provider. Demo changes
+are stored only in the current browser. No production backend, customer
+integration, infrastructure secret, or proprietary commercial service is
+included in this repository.
+
 ## Product preview
 
 ![Trackvera order control tower showing delivery health, RACI ownership, search, and status filters](./docs/images/trackvera-control-tower.png)
@@ -390,3 +404,9 @@ configured CSP, frame, MIME, referrer, and permissions-policy headers.
   Core Web Vitals.
 
 See [PROJECT_PLAN.md](./PROJECT_PLAN.md) for the next delivery phases.
+
+## Licence
+
+The code is available for portfolio review under the repository's
+[all-rights-reserved notice](./LICENSE). It is not released under an open-source
+licence.

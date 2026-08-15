@@ -23,7 +23,7 @@ const newOrder: ProjectFormInput = {
   product: "Managed Ethernet and 5G backup",
   site: "Midlands distribution estate",
   thirdParty: "ChannelLink",
-  supplier: "BT Business",
+  supplier: "National Connect",
   crfReference: "CRF-260810-001",
   thirdPartyReference: "CL-901144",
   supplierReference: "BT-778812",
