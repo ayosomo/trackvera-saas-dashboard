@@ -124,7 +124,7 @@ Day 4 exit criterion: authentication and permission behaviour is demonstrable
 with mock identities while the documentation makes clear that production
 authorisation belongs to the API.
 
-### Day 5 - CI/CD and deployment - In progress
+### Day 5 - CI/CD and deployment - Complete
 
 - [x] Add an explicit strict TypeScript check
 - [x] Run lint, type-check, unit/component tests, build, and E2E on pull requests
@@ -136,7 +136,7 @@ authorisation belongs to the API.
 - [x] Publish a claimable Vercel production deployment
 - [x] Claim the deployment in Vercel
 - [x] Verify the permanent public URL and direct application routes
-- [ ] Configure GitHub deployment secrets and verify the first gated release
+- [x] Configure GitHub deployment secrets and verify the first gated release
 
 Day 5 exit criterion: every pull request is automatically verified, failed
 checks cannot start a release, and the verified frontend is available at a

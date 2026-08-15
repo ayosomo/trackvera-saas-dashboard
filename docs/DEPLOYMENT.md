@@ -7,10 +7,12 @@ through a rewrite to `index.html`, and applies the security headers in
 
 Production: [trackvera-saas-dashboard.vercel.app](https://trackvera-saas-dashboard.vercel.app/projects)
 
-The initial public deployment is connected to the GitHub repository through
-Vercel. The Actions-based release workflow below remains disabled until its
-scoped credentials are configured; this prevents an incomplete release job
-from failing noisily.
+The public deployment is connected to the GitHub repository through Vercel.
+The Actions-based production workflow is also enabled and has completed its
+first gated release: CI verified commit `ece62ac`, then the workflow deployed
+that exact commit to production. The scoped `VERCEL_TOKEN` expires on 13
+November 2026 and must be rotated in both Vercel and the GitHub repository
+secret before that date.
 
 ## Production pipeline
 
