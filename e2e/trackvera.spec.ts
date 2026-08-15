@@ -97,7 +97,10 @@ test("loads and explores the order portfolio with URL-backed controls", async ({
   await page.getByLabel("Filter by status").selectOption("All statuses");
   await page.getByLabel("Sort orders by").selectOption("monthlyValue");
   await expect(page).toHaveURL(/sort=monthlyValue/);
-  await page.getByRole("button", { name: /Next/ }).click();
+  await expect(page.getByText("7 orders", { exact: true })).toBeVisible();
+  const nextPageButton = page.getByRole("button", { name: /Next/ });
+  await expect(nextPageButton).toBeEnabled();
+  await nextPageButton.click();
   await expect(page).toHaveURL(/sort=monthlyValue&page=2/);
   await expect(page.getByText("Page 2 of 2")).toBeVisible();
 });
