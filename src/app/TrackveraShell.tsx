@@ -599,29 +599,68 @@ function Sidebar({
           <span>{roleLabels[user.role]}</span>
         </div>
         <details className="session-menu">
-          <summary aria-label="Security demo options">···</summary>
+          <summary aria-label="Security demo options">
+            <span className="session-menu__trigger-initials" aria-hidden="true">
+              {user.name
+                .split(" ")
+                .map((part) => part[0])
+                .join("")}
+            </span>
+            <span className="session-menu__trigger-chevron" aria-hidden="true">
+              ⌄
+            </span>
+          </summary>
           <div className="session-menu__panel">
-            <p className="eyebrow">Security demo</p>
-            <label>
-              <span>Active identity</span>
-              <select
-                aria-label="Active demo identity"
-                value={user.id}
-                onChange={(event) => onIdentityChange(event.target.value)}
-              >
+            <div className="session-menu__header">
+              <div>
+                <p className="eyebrow">Demo workspace</p>
+                <h2>Account &amp; access</h2>
+              </div>
+              <span className="session-menu__demo-chip">Mock identities</span>
+            </div>
+            <p className="session-menu__intro">
+              Preview how Trackvera adapts actions and permissions for each role.
+            </p>
+            <fieldset className="session-menu__identities">
+              <legend>Choose active identity</legend>
+              <div className="session-menu__identity-list">
                 {mockIdentities.map((identity) => (
-                  <option value={identity.id} key={identity.id}>
-                    {identity.name} · {roleLabels[identity.role]}
-                  </option>
+                  <button
+                    type="button"
+                    className={
+                      identity.id === user.id
+                        ? "session-menu__identity session-menu__identity--active"
+                        : "session-menu__identity"
+                    }
+                    aria-pressed={identity.id === user.id}
+                    key={identity.id}
+                    onClick={() => onIdentityChange(identity.id)}
+                  >
+                    <span className="session-menu__identity-avatar" aria-hidden="true">
+                      {identity.name
+                        .split(" ")
+                        .map((part) => part[0])
+                        .join("")}
+                    </span>
+                    <span className="session-menu__identity-copy">
+                      <strong>{identity.name}</strong>
+                      <small>{roleLabels[identity.role]}</small>
+                    </span>
+                    <span className="session-menu__identity-status" aria-hidden="true">
+                      {identity.id === user.id ? "✓" : ""}
+                    </span>
+                  </button>
                 ))}
-              </select>
-            </label>
-            <button type="button" onClick={onExpireSession}>
-              Expire session
-            </button>
-            <button type="button" onClick={onSignOut}>
-              Log out
-            </button>
+              </div>
+            </fieldset>
+            <div className="session-menu__actions">
+              <button type="button" onClick={onExpireSession}>
+                Expire session
+              </button>
+              <button type="button" className="session-menu__logout" onClick={onSignOut}>
+                Log out
+              </button>
+            </div>
           </div>
         </details>
       </div>

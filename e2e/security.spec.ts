@@ -37,6 +37,40 @@ test("protects routes and provides password-free mock sign in", async ({
   await expect(page).toHaveURL(/\/projects\/ord-apex$/);
 });
 
+test("keeps every demo identity visible and usable on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await installProjectsApi(page);
+  await page.goto("/projects");
+  await openSecurityMenu(page);
+
+  const accessPanel = page.locator(".session-menu__panel");
+  await expect(accessPanel).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Avery Morgan Admin" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Jordan Lee Operations Manager" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(
+    page.getByRole("button", { name: "Sam Rivera Engineer" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Taylor Brooks Read-only User" }),
+  ).toBeVisible();
+
+  const panelBox = await accessPanel.boundingBox();
+  expect(panelBox).not.toBeNull();
+  expect(panelBox?.x).toBeGreaterThanOrEqual(0);
+  expect((panelBox?.x ?? 0) + (panelBox?.width ?? 0)).toBeLessThanOrEqual(390);
+  expect((panelBox?.y ?? 0) + (panelBox?.height ?? 0)).toBeLessThanOrEqual(844);
+
+  await page.getByRole("button", { name: "Sam Rivera Engineer" }).click();
+  await expect(
+    page.getByRole("button", { name: "Sam Rivera Engineer" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "New order" })).toHaveCount(0);
+});
+
 test("viewer receives a read-only interface", async ({ page }) => {
   await useIdentity(page, "demo-viewer");
   await installProjectsApi(page);
