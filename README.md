@@ -1,8 +1,15 @@
 # Trackvera
 
+> MSP order orchestration with accountable delivery workflows.
+
 [![CI](https://github.com/ayosomo/trackvera-saas-dashboard/actions/workflows/ci.yml/badge.svg)](https://github.com/ayosomo/trackvera-saas-dashboard/actions/workflows/ci.yml)
 
-**Live demo:** [trackvera-saas-dashboard.vercel.app](https://trackvera-saas-dashboard.vercel.app/projects)
+| | |
+| --- | --- |
+| **Live demo** | [Open Trackvera](https://trackvera-saas-dashboard.vercel.app/projects) |
+| **Stack** | React 19, TypeScript, Vite, TanStack Query, React Router |
+| **Tests** | Vitest, React Testing Library, Playwright, axe |
+| **Deployment** | Vercel, gated by GitHub Actions |
 
 Trackvera is a frontend SaaS dashboard prototype designed around a
 production-style architecture. It gives MSP project coordinators one
@@ -32,7 +39,7 @@ included in this repository.
 
 ## Product preview
 
-![Trackvera order control tower showing delivery health, RACI ownership, search, and status filters](./docs/images/trackvera-control-tower.png)
+![Trackvera order control tower showing delivery health, RACI ownership, search, and status filters](./docs/images/trackvera-dashboard.png)
 
 <p align="center">
   <img
